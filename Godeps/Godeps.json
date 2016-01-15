@@ -31,6 +31,10 @@
 		{
 			"ImportPath": "github.com/latam-airlines/mesos-framework-factory",
 			"Rev": "d9bad120576e5e94b04aec3403cae013a622dc4e"
-		}
+		},
+                {
+                        "ImportPath": "github.com/stretchr/testify",
+                        "Rev": "f390dcf405f7b83c997eac1b06768bb9f44dec18"
+                }
 	]
 }
