@@ -1,0 +1,10 @@
+[34mINFO[0m[2016-01-07T15:35:29Z] Configurando el endpoint de Docker http://127.0.0.1:45060 
+[34mINFO[0m[2016-01-07T15:35:29Z] API configurada y mapeada a la llave A       
+[34mINFO[0m[2016-01-07T15:36:13Z] Configurando el endpoint de Docker http://127.0.0.1:38023 
+[34mINFO[0m[2016-01-07T15:36:13Z] API configurada y mapeada a la llave A       
+time="2016-01-07T19:09:17Z" level=info msg="Configurando el endpoint de Docker http://127.0.0.1:49632" 
+time="2016-01-07T19:09:17Z" level=info msg="API configurada y mapeada a la llave A" 
+time="2016-01-07T19:41:41Z" level=info msg="Configurando el endpoint de Docker http://127.0.0.1:43627" 
+time="2016-01-07T19:41:41Z" level=info msg="API configurada y mapeada a la llave A" 
+time="2016-01-07T19:42:07Z" level=info msg="Configurando el endpoint de Docker http://127.0.0.1:42444" 
+time="2016-01-07T19:42:07Z" level=info msg="API configurada y mapeada a la llave A" 
