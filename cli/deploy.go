@@ -29,10 +29,6 @@ func handleDeploySigTerm(sm *cluster.StackManager) {
 func deployFlags() []cli.Flag {
 	return []cli.Flag{
 		cli.StringFlag{
-			Name:  "service-id",
-			Usage: "Id del servicio",
-		},
-		cli.StringFlag{
 			Name:  "image",
 			Usage: "Nombre de la imagen",
 		},
@@ -118,13 +114,13 @@ func deployCmd(c *cli.Context) {
 	}
 
 	serviceConfig := framework.ServiceConfig{
-		ServiceID: c.String("service-id"),
 		CPUShares: c.Int("cpu"),
 		Envs:      envs,
 		ImageName: c.String("image"),
 		Publish:   []string{"8080/tcp"}, // TODO desplegar puertos que no sean 8080
 		Tag:       c.String("tag"),
 	}
+	serviceConfig.ConvertImageTagToServiceId()
 
 	if c.String("memory") != "" {
 		n, _ := strconv.ParseInt(c.String("memory"), 10, 64)
