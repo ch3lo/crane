@@ -143,6 +143,12 @@ func globalFlags() []cli.Flag {
 			Usage:  "Output de los logs. console | file",
 			EnvVar: "DEPLOYER_LOG_OUTPUT",
 		},
+		cli.IntFlag{
+			Name:   "deploy-timeout",
+			Value:  30,
+			Usage:  "Deploy timeout in seconds, default 30 seconds",
+			EnvVar: "DEPLOYER_TIMEOUT",
+		},
 	}
 
 	return flags
@@ -182,6 +188,7 @@ func setupGlobalFlags(c *cli.Context) error {
 		util.Log.Infof("Configurando el endpoint de Docker %s", ep)
 		params := make(map[string]interface{})
 		params["address"] = ep
+		params["deploy-timeout"] = c.Int("deploy-timeout")
 		clusterFramework, err := factory.Create(frameworkType, params)
 		if err != nil {
 			return errors.New(fmt.Sprintf("Error creating framework %s in %s. %s", frameworkType, ep, err.Error()))
