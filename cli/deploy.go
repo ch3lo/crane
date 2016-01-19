@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"syscall"
 	"strconv"
+	"regexp"
 
 	"github.com/latam-airlines/crane/cluster"
 	"github.com/latam-airlines/crane/util"
@@ -38,7 +39,7 @@ func deployFlags() []cli.Flag {
 		},
 		cli.StringSliceFlag{
 			Name:  "port",
-			Value: &cli.StringSlice{"8080"},
+			Value: &cli.StringSlice{"8080/tcp"},
 			Usage: "Puerto interno del contenedor a exponer en el Host",
 		},
 		cli.IntFlag{
@@ -102,6 +103,24 @@ type callbackResume struct {
 	Address    string `json:"Address"`
 }
 
+func applyPorts(ports []string, cfg *framework.ServiceConfig) error {
+	if ports == nil || len(ports) == 0 {
+		cfg.Publish = []string{"8080/tcp"}
+		return nil
+	}
+	cfg.Publish = make([]string, len(ports))
+	//var validPort = regexp.MustCompile(`^[a-z]+\[[0-9]+\]$`)
+	var validPort = regexp.MustCompile(`^[0-9]*\/(udp|tcp|UDP|TCP)$`)
+	for i, port := range ports {
+		if validPort.MatchString(port) {
+			cfg.Publish[i]=port
+		} else {
+			return errors.New("Port does not match format, ie. 8080/tcp")
+		}
+        }
+	return nil
+}
+
 func deployCmd(c *cli.Context) {
 
 	envs, err := util.ParseMultiFileLinesToArray(c.StringSlice("env-file"))
@@ -117,11 +136,10 @@ func deployCmd(c *cli.Context) {
 		CPUShares: c.Int("cpu"),
 		Envs:      envs,
 		ImageName: c.String("image"),
-		Publish:   []string{"8080/tcp"}, // TODO desplegar puertos que no sean 8080
 		Tag:       c.String("tag"),
 	}
 	serviceConfig.ConvertImageTagToServiceId()
-
+	applyPorts(c.StringSlice("port"), &serviceConfig)
 	if c.String("memory") != "" {
 		n, _ := strconv.ParseInt(c.String("memory"), 10, 64)
 		serviceConfig.Memory = int64(n)
