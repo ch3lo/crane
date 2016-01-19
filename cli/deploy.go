@@ -39,7 +39,6 @@ func deployFlags() []cli.Flag {
 		},
 		cli.StringSliceFlag{
 			Name:  "port",
-			Value: &cli.StringSlice{"8080/tcp"},
 			Usage: "Puerto interno del contenedor a exponer en el Host",
 		},
 		cli.IntFlag{
@@ -109,7 +108,6 @@ func applyPorts(ports []string, cfg *framework.ServiceConfig) error {
 		return nil
 	}
 	cfg.Publish = make([]string, len(ports))
-	//var validPort = regexp.MustCompile(`^[a-z]+\[[0-9]+\]$`)
 	var validPort = regexp.MustCompile(`^[0-9]*\/(udp|tcp|UDP|TCP)$`)
 	for i, port := range ports {
 		if validPort.MatchString(port) {
