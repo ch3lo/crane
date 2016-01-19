@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"syscall"
 	"strconv"
+	"strings"
 
 	"github.com/latam-airlines/crane/cluster"
 	"github.com/latam-airlines/crane/util"
@@ -70,6 +71,14 @@ func deployFlags() []cli.Flag {
 				"Este valor es respecto al total de instancias." +
 				"Por ejemplo, si se despliegan 5 servicios y fallan ",
 		},
+                cli.StringSliceFlag{
+                        Name:  "constraint",
+                        Usage: "Add constraint to the deployment, ie --constraint=slave_name=beta4002, --constraint=hostname=UNIQUE",
+                },
+                cli.StringFlag{
+                        Name:  "beta",
+                        Usage: "Beta-Node to deploy to, ie --beta=beta4002",
+                },
 	}
 }
 
@@ -102,6 +111,24 @@ type callbackResume struct {
 	Address    string `json:"Address"`
 }
 
+func applyConstraints(contextConstraints []string, beta string, cfg *framework.ServiceConfig) error{
+	constraints := make(map[string]string)
+	for _, constraint := range contextConstraints {
+		if !strings.Contains(constraint, "=") {
+			return errors.New("Constraint does not comply format key=value")
+		}
+		splits := strings.Split(constraint, "=")
+		constraints[splits[0]]=splits[1]
+        }
+	if beta != "" {
+		constraints["slave_name"]=beta
+	}
+	if len(constraints) != 0 {
+		cfg.Constraints = constraints
+	}
+	return nil
+}
+
 func deployCmd(c *cli.Context) {
 
 	envs, err := util.ParseMultiFileLinesToArray(c.StringSlice("env-file"))
@@ -126,9 +153,12 @@ func deployCmd(c *cli.Context) {
 		n, _ := strconv.ParseInt(c.String("memory"), 10, 64)
 		serviceConfig.Memory = int64(n)
 	}
-
-	util.Log.Debugf("La configuración del servicio es: %#v", serviceConfig.String())
-
+	
+	err = applyConstraints(c.StringSlice("constraint"), c.String("beta"), &serviceConfig)
+	if err != nil {
+		util.Log.Fatalln("Error reading constraints", err)
+	}
+	
 	handleDeploySigTerm(stackManager)
 	if stackManager.Deploy(serviceConfig, c.Int("instances"), c.Float64("tolerance")) {
 		services := stackManager.DeployedContainers()
