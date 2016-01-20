@@ -5,12 +5,21 @@ import (
 	"github.com/latam-airlines/mesos-framework-factory"
 )
 
+type CraneManager interface {
+	AppendStack(fh framework.Framework)
+	Deploy(serviceConfig framework.ServiceConfig, instances int, tolerance float64) bool
+	FindServiceInformation(string) []*framework.ServiceInformation
+	DeployedContainers () []*framework.ServiceInformation
+	Rollback()
+	DeleteService(string) error
+}
+
 type StackManager struct {
 	stacks            map[string]*Stack
 	stackNotification chan StackStatus
 }
 
-func NewStackManager() *StackManager {
+func NewStackManager() CraneManager {
 	sm := new(StackManager)
 	sm.stacks = make(map[string]*Stack)
 	sm.stackNotification = make(chan StackStatus, 100)
@@ -49,16 +58,6 @@ func (sm *StackManager) Deploy(serviceConfig framework.ServiceConfig, instances 
 	for stackKey, _ := range sm.stacks {
 		sm.stacks[stackKey].DeployCheckAndNotify(serviceConfig, instances, tolerance)
 	}
-	/*
-		for i := 0; i < len(sm.stacks); i++ {
-			stackStatus := <-sm.stackNotification
-			util.Log.Infoln("Se recibió notificación del Stack con estado", stackStatus)
-			if stackStatus == STACK_FAILED {
-				util.Log.Errorln("Fallo el stack, se procederá a realizar Rollback")
-				sm.Rollback()
-				return false
-			}
-		}*/
 	util.Log.Infoln("Proceso de deploy OK")
 	return true
 }
@@ -90,8 +89,16 @@ func (sm *StackManager) DeployedContainers () []*framework.ServiceInformation {
 }
 
 func (sm *StackManager) Rollback() {
-	util.Log.Infoln("Iniciando el Rollback")
+       util.Log.Infoln("Starting Rollback")
+       for stack, _ := range sm.stacks {
+               sm.stacks[stack].Rollback()
+       }
+}
+
+func (sm *StackManager) DeleteService(serviceId string) error {
+	util.Log.Infoln("Starting DeleteService")
 	for stack, _ := range sm.stacks {
-		sm.stacks[stack].Rollback()
+		sm.stacks[stack].DeleteService(serviceId)
 	}
+	return nil
 }
