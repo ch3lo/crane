@@ -40,3 +40,33 @@ func TestInvalidFramework(t *testing.T) {
 	assert.NotNil(t, err, "Should return error")
 }
 
+func TestDeployTimeout(t *testing.T) {
+        os.Args = append(os.Args, "--framework=marathon", "--endpoint=url", "--deploy-timeout=20", "deploy", "--image=nginx", "--tag=latest")
+	if os.Getenv("BE_CRASHER") == "1" {
+		RunApp()
+		return
+	}
+	cmd := exec.Command(os.Args[0], "-test.run=TestDeployTimeout")
+	cmd.Env = append(os.Environ(), "BE_CRASHER=1")
+	err := cmd.Run()
+	
+	fmt.Println("err")
+	fmt.Println(err)
+	assert.NotNil(t, err, "Should return error")
+}
+
+func TestInvalidDeployTimeout(t *testing.T) {
+        os.Args = append(os.Args, "--framework=marathon", "--endpoint=url", "--deploy-timeout=abc", "deploy", "--image=nginx", "--tag=latest")
+	if os.Getenv("BE_CRASHER") == "1" {
+		RunApp()
+		return
+	}
+	cmd := exec.Command(os.Args[0], "-test.run=TestInvalidFramework")
+	cmd.Env = append(os.Environ(), "BE_CRASHER=1")
+	err := cmd.Run()
+	fmt.Println("err")
+	fmt.Println(err)
+	assert.NotNil(t, err, "Should return error")
+}
+
+
