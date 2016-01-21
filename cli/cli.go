@@ -199,7 +199,7 @@ func setupGlobalFlags(c *cli.Context) error {
 	return nil
 }
 
-func RunApp() {
+func RunApp() error {
 
 	app := cli.NewApp()
 	app.Name = "cloud-crane"
@@ -225,6 +225,12 @@ func RunApp() {
 	err = app.Run(os.Args)
 	if err != nil {
 		fmt.Println(err)
-		util.Log.Fatalln(err)
+		/* XXX: ¿Afecta a RunDeck no salir del crane con Log.Fatal()?? os.Exit(1)
+		 * en ese caso se debera usar un flag tipo test=true, igual al flag debug
+		 * que ya existe */
+		util.Log.Errorln(err)
+		
 	}
+	
+	return err
 }
