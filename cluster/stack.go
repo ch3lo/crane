@@ -97,3 +97,7 @@ func (s *Stack) FindServiceInformation(search string) ([]*framework.ServiceInfor
 	s.services = services
 	return s.services, nil
 }
+
+func (s *Stack) DeleteService(serviceId string) error {
+	return s.frameworkApiHelper.DeleteService(serviceId)
+}

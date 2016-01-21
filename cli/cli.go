@@ -15,7 +15,7 @@ import (
 	"github.com/latam-airlines/mesos-framework-factory/factory"
 )
 
-var stackManager *cluster.StackManager
+var stackManager cluster.CraneManager
 var logFile *os.File = nil
 
 type logConfig struct {
@@ -185,7 +185,7 @@ func setupGlobalFlags(c *cli.Context) error {
 	stackManager = cluster.NewStackManager()
 
 	for _, ep := range c.StringSlice("endpoint") {
-		util.Log.Infof("Configurando el endpoint de Docker %s", ep)
+		util.Log.Infof("Configuring scheduler for endpoint %s", ep)
 		params := make(map[string]interface{})
 		params["address"] = ep
 		params["deploy-timeout"] = c.Int("deploy-timeout")
