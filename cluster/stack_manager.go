@@ -53,12 +53,13 @@ func (sm *StackManager) AppendStack(fh framework.Framework) {
 }
 
 func (sm *StackManager) Deploy(serviceConfig framework.ServiceConfig, instances int, tolerance float64) bool {
-	util.Log.Infoln("enter deploy stack manager %d", len(sm.stacks))
+	util.Log.Infof("enter deploy stack manager %d", len(sm.stacks))
 
 	for stackKey, _ := range sm.stacks {
 		sm.stacks[stackKey].DeployCheckAndNotify(serviceConfig, instances, tolerance)
+		util.Log.Infof("Proceso de deploy OK en %s", stackKey)
 	}
-	util.Log.Infoln("Proceso de deploy OK")
+	util.Log.Infoln("Proceso de deploy OK on All Stacks")
 	return true
 }
 
