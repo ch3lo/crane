@@ -19,4 +19,12 @@ var commands = []cli.Command{
                 Before:  findBefore,
                 Action:  findCmd,
         },
+        {
+                Name:    "delete",
+                Aliases: []string{"x"},
+                Usage:   "delete service",
+                Flags:   deleteFlags(),
+                Before:  deleteBefore,
+                Action:  deleteCmd,
+        },
 }

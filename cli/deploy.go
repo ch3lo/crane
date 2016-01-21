@@ -17,7 +17,7 @@ import (
 	"github.com/latam-airlines/mesos-framework-factory"
 )
 
-func handleDeploySigTerm(sm *cluster.StackManager) {
+func handleDeploySigTerm(sm cluster.CraneManager) {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 	signal.Notify(c, syscall.SIGTERM)
