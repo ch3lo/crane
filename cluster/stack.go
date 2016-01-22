@@ -70,10 +70,13 @@ func (s *Stack) createId() string {
 }
 
 
-func (s *Stack) DeployCheckAndNotify(serviceConfig framework.ServiceConfig, instances int, tolerance float64) {
+func (s *Stack) DeployCheckAndNotify(serviceConfig framework.ServiceConfig, instances int, tolerance float64, ch chan int) {
 	_, err := s.frameworkApiHelper.DeployService(serviceConfig, instances)
 	if err != nil {
+		ch <- 1 // error
 		fmt.Println(err)
+	} else {
+		ch <- 0 // success
 	}
 }
 

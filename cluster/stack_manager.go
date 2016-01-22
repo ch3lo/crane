@@ -53,13 +53,24 @@ func (sm *StackManager) AppendStack(fh framework.Framework) {
 }
 
 func (sm *StackManager) Deploy(serviceConfig framework.ServiceConfig, instances int, tolerance float64) bool {
-	util.Log.Infof("enter deploy stack manager %d", len(sm.stacks))
+	util.Log.Infof("enter deploy stack manager - stacks: %d", len(sm.stacks))
+	
+	chanMap := make(map[string]chan int)
 
 	for stackKey, _ := range sm.stacks {
-		sm.stacks[stackKey].DeployCheckAndNotify(serviceConfig, instances, tolerance)
-		util.Log.Infof("Proceso de deploy OK en %s", stackKey)
+		ch := make(chan int) // 0 is Ok, 1 is Error
+		chanMap[stackKey] = ch
+		go sm.stacks[stackKey].DeployCheckAndNotify(serviceConfig, instances, tolerance, ch)
 	}
-	util.Log.Infoln("Proceso de deploy OK on All Stacks")
+	
+	//Checking for results on each go routine
+	for stackKey, ch  := range chanMap {
+		if (<-ch == 0) {
+			util.Log.Infof("Proceso de deploy OK en stack %s", stackKey)
+		} else {
+			util.Log.Errorf("Proceso de deploy Falló en stack %s", stackKey)
+		}
+	}
 	return true
 }
 
