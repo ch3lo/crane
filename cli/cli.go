@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/latam-airlines/crane/cluster"
@@ -23,15 +22,6 @@ type logConfig struct {
 	LogFormatter string
 	LogColored   bool
 	LogOutput    string
-}
-
-func dockerCfgPath() string {
-	p := path.Join(os.Getenv("HOME"), ".docker", "config.json")
-	if err := util.FileExists(p); err != nil {
-		p = path.Join(os.Getenv("HOME"), ".dockercfg")
-	}
-
-	return p
 }
 
 func setupLogger(debug bool, config logConfig) error {
@@ -154,18 +144,6 @@ func globalFlags() []cli.Flag {
 	return flags
 }
 
-func buildCertPath(certPath string, file string) string {
-	if file == "" {
-		return ""
-	}
-
-	if certPath != "" {
-		return certPath + "/" + file
-	}
-
-	return file
-}
-
 func setupGlobalFlags(c *cli.Context) error {
 	var config logConfig = logConfig{}
 	config.LogLevel = c.String("log-level")
@@ -199,7 +177,7 @@ func setupGlobalFlags(c *cli.Context) error {
 	return nil
 }
 
-func RunApp() error {
+func RunApp() {
 
 	app := cli.NewApp()
 	app.Name = "cloud-crane"
@@ -224,13 +202,7 @@ func RunApp() error {
 
 	err = app.Run(os.Args)
 	if err != nil {
-		fmt.Println(err)
-		/* XXX: ¿Afecta a RunDeck no salir del crane con Log.Fatal()?? os.Exit(1)
-		 * en ese caso se debera usar un flag tipo test=true, igual al flag debug
-		 * que ya existe */
-		util.Log.Errorln(err)
+		util.Log.Fatalln(err)
 		
 	}
-	
-	return err
 }
