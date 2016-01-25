@@ -19,7 +19,7 @@ func TestCliCmdDeploy(t *testing.T) {
 	assert.Equal(t, 1, stacks.Len(), "Cli should instantiate at least one stack")
 }
 
-func TestInvalidFramework(t *testing.T) {
+func TestInvalidLoglevel(t *testing.T) {
         set := flag.NewFlagSet("test", 0)
         set.String("log-level", "OtherLevel", "some hint")
         ctx := cli.NewContext(nil, set, nil)
@@ -27,7 +27,7 @@ func TestInvalidFramework(t *testing.T) {
 	assert.NotNil(t, err, "Should return error")
 }
 
-func TestInvalidLoglevel(t *testing.T) {
+func TestInvalidFramework(t *testing.T) {
         set := flag.NewFlagSet("test", 0)
         set.String("framework", "OtherFramework", "some hint")
         set.String("endpoint", "http://localhost:8081", "some hint")
