@@ -15,13 +15,13 @@ type CraneManager interface {
 }
 
 type StackManager struct {
-	stacks            map[string]*Stack
+	stacks            map[string]StackInterface
 	stackNotification chan StackStatus
 }
 
 func NewStackManager() CraneManager {
 	sm := new(StackManager)
-	sm.stacks = make(map[string]*Stack)
+	sm.stacks = make(map[string]StackInterface)
 	sm.stackNotification = make(chan StackStatus, 100)
 
 	return sm
@@ -58,7 +58,7 @@ func (sm *StackManager) Deploy(serviceConfig framework.ServiceConfig, instances 
 	chanMap := make(map[string]chan int)
 
 	for stackKey, _ := range sm.stacks {
-		ch := make(chan int) // 0 is Ok, 1 is Error
+		ch := make(chan int) // 0 == Ok, 1 == Error
 		chanMap[stackKey] = ch
 		go sm.stacks[stackKey].DeployCheckAndNotify(serviceConfig, instances, tolerance, ch)
 	}
