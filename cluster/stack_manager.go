@@ -66,9 +66,11 @@ func (sm *StackManager) Deploy(serviceConfig framework.ServiceConfig, instances 
 	//Checking for results on each go routine
 	for stackKey, ch  := range chanMap {
 		if (<-ch == 0) {
-			util.Log.Infof("Proceso de deploy OK en stack %s", stackKey)
+			util.Log.Infof("Deploy Process OK on stack %s", stackKey)
 		} else {
-			util.Log.Errorf("Proceso de deploy Falló en stack %s", stackKey)
+			util.Log.Errorf("Deploy Process Fails ok stack %s", stackKey)
+			sm.Rollback()
+			return false
 		}
 	}
 	return true
@@ -77,13 +79,13 @@ func (sm *StackManager) Deploy(serviceConfig framework.ServiceConfig, instances 
 func (sm *StackManager) FindServiceInformation(search string) []*framework.ServiceInformation {
 	allServices := make([]*framework.ServiceInformation, 0)
         for stack, _ := range sm.stacks {
-                services, err := sm.stacks[stack].FindServiceInformation(search)
-		if err != nil {
-			util.Log.Errorln(err)
-		}
-		if services != nil || len(services) != 0 {
-			allServices = append(allServices, services...)
-		}
+			services, err := sm.stacks[stack].FindServiceInformation(search)
+			if err != nil {
+				util.Log.Errorln(err)
+			}
+			if services != nil || len(services) != 0 {
+				allServices = append(allServices, services...)
+			}
         }
 	return allServices
 }
