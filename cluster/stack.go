@@ -25,6 +25,16 @@ func (s StackStatus) String() string {
 	return stackStatus[s-1]
 }
 
+type StackInterface interface {
+	getServices() []*framework.ServiceInformation
+	createId() string
+	undeployInstance(instance string)
+	DeployCheckAndNotify(serviceConfig framework.ServiceConfig, instances int, tolerance float64, ch chan int)
+	FindServiceInformation(search string) ([]*framework.ServiceInformation, error)
+	DeleteService(serviceId string) error
+	Rollback()
+}
+
 type Stack struct {
 	id                    string
 	frameworkApiHelper    framework.Framework
@@ -34,7 +44,7 @@ type Stack struct {
 	log                   *log.Entry
 }
 
-func NewStack(stackKey string, stackNofitication chan<- StackStatus, fh framework.Framework) *Stack {
+func NewStack(stackKey string, stackNofitication chan<- StackStatus, fh framework.Framework) StackInterface {
 	s := new(Stack)
 	s.id = stackKey
 	s.stackNofitication = stackNofitication
@@ -70,10 +80,13 @@ func (s *Stack) createId() string {
 }
 
 
-func (s *Stack) DeployCheckAndNotify(serviceConfig framework.ServiceConfig, instances int, tolerance float64) {
+func (s *Stack) DeployCheckAndNotify(serviceConfig framework.ServiceConfig, instances int, tolerance float64, ch chan int) {
 	_, err := s.frameworkApiHelper.DeployService(serviceConfig, instances)
 	if err != nil {
+		ch <- 1 // error
 		fmt.Println(err)
+	} else {
+		ch <- 0 // success
 	}
 }
 

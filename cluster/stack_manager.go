@@ -15,13 +15,13 @@ type CraneManager interface {
 }
 
 type StackManager struct {
-	stacks            map[string]*Stack
+	stacks            map[string]StackInterface
 	stackNotification chan StackStatus
 }
 
 func NewStackManager() CraneManager {
 	sm := new(StackManager)
-	sm.stacks = make(map[string]*Stack)
+	sm.stacks = make(map[string]StackInterface)
 	sm.stackNotification = make(chan StackStatus, 100)
 
 	return sm
@@ -53,25 +53,39 @@ func (sm *StackManager) AppendStack(fh framework.Framework) {
 }
 
 func (sm *StackManager) Deploy(serviceConfig framework.ServiceConfig, instances int, tolerance float64) bool {
-	util.Log.Infoln("enter deploy stack manager %d", len(sm.stacks))
+	util.Log.Infof("enter deploy stack manager - stacks: %d", len(sm.stacks))
+	
+	chanMap := make(map[string]chan int)
 
 	for stackKey, _ := range sm.stacks {
-		sm.stacks[stackKey].DeployCheckAndNotify(serviceConfig, instances, tolerance)
+		ch := make(chan int) // 0 == Ok, 1 == Error
+		chanMap[stackKey] = ch
+		go sm.stacks[stackKey].DeployCheckAndNotify(serviceConfig, instances, tolerance, ch)
 	}
-	util.Log.Infoln("Proceso de deploy OK")
+	
+	//Checking for results on each go routine
+	for stackKey, ch  := range chanMap {
+		if (<-ch == 0) {
+			util.Log.Infof("Deploy Process OK on stack %s", stackKey)
+		} else {
+			util.Log.Errorf("Deploy Process Fails ok stack %s", stackKey)
+			sm.Rollback()
+			return false
+		}
+	}
 	return true
 }
 
 func (sm *StackManager) FindServiceInformation(search string) []*framework.ServiceInformation {
 	allServices := make([]*framework.ServiceInformation, 0)
         for stack, _ := range sm.stacks {
-                services, err := sm.stacks[stack].FindServiceInformation(search)
-		if err != nil {
-			util.Log.Errorln(err)
-		}
-		if services != nil || len(services) != 0 {
-			allServices = append(allServices, services...)
-		}
+			services, err := sm.stacks[stack].FindServiceInformation(search)
+			if err != nil {
+				util.Log.Errorln(err)
+			}
+			if services != nil || len(services) != 0 {
+				allServices = append(allServices, services...)
+			}
         }
 	return allServices
 }
