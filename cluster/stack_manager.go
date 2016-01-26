@@ -1,15 +1,15 @@
 package cluster
 
 import (
+	"github.com/latam-airlines/crane/configuration"
 	"github.com/latam-airlines/crane/util"
 	"github.com/latam-airlines/mesos-framework-factory"
 )
 
 type CraneManager interface {
-	AppendStack(fh framework.Framework)
 	Deploy(serviceConfig framework.ServiceConfig, instances int, tolerance float64) bool
 	FindServiceInformation(string) []*framework.ServiceInformation
-	DeployedContainers () []*framework.ServiceInformation
+	DeployedContainers() []*framework.ServiceInformation
 	Rollback()
 	DeleteService(string) error
 }
@@ -19,53 +19,53 @@ type StackManager struct {
 	stackNotification chan StackStatus
 }
 
-func NewStackManager() CraneManager {
+func NewStackManager(config *configuration.Configuration) CraneManager {
 	sm := new(StackManager)
 	sm.stacks = make(map[string]StackInterface)
 	sm.stackNotification = make(chan StackStatus, 100)
 
+	sm.setupStacks(config.Clusters)
+
 	return sm
 }
 
-func (sm *StackManager) createId() string {
-	i := 0
-	for {
-		key := util.Letter(i)
-		exist := false
-
-		for k := range sm.stacks {
-			if k == key {
-				exist = true
+// setupClusters inicia el cluster, mapeando el cluster el id del cluster como key
+func (sm *StackManager) setupStacks(config map[string]configuration.Cluster) {
+	for key := range config {
+		s, err := NewStack(key, sm.stackNotification, config[key])
+		if err != nil {
+			switch err.(type) {
+			case *ClusterDisabled:
+				util.Log.Warnln(err.Error())
+				continue
+			default:
+				util.Log.Fatalln(err.Error())
 			}
 		}
 
-		if !exist {
-			return key
-		}
-		i++
+		sm.stacks[key] = s
+		util.Log.Infof("Se configuro el cluster %s", key)
 	}
-}
 
-func (sm *StackManager) AppendStack(fh framework.Framework) {
-	key := sm.createId()
-	util.Log.Infof("API configurada y mapeada a la llave %s", key)
-	sm.stacks[key] = NewStack(key, sm.stackNotification, fh)
+	if len(sm.stacks) == 0 {
+		util.Log.Fatalln("Al menos debe existir un cluster")
+	}
 }
 
 func (sm *StackManager) Deploy(serviceConfig framework.ServiceConfig, instances int, tolerance float64) bool {
 	util.Log.Infof("enter deploy stack manager - stacks: %d", len(sm.stacks))
-	
+
 	chanMap := make(map[string]chan int)
 
-	for stackKey, _ := range sm.stacks {
+	for stackKey := range sm.stacks {
 		ch := make(chan int) // 0 == Ok, 1 == Error
 		chanMap[stackKey] = ch
 		go sm.stacks[stackKey].DeployCheckAndNotify(serviceConfig, instances, tolerance, ch)
 	}
-	
+
 	//Checking for results on each go routine
-	for stackKey, ch  := range chanMap {
-		if (<-ch == 0) {
+	for stackKey, ch := range chanMap {
+		if <-ch == 0 {
 			util.Log.Infof("Deploy Process OK on stack %s", stackKey)
 		} else {
 			util.Log.Errorf("Deploy Process Fails ok stack %s", stackKey)
@@ -77,41 +77,41 @@ func (sm *StackManager) Deploy(serviceConfig framework.ServiceConfig, instances 
 }
 
 func (sm *StackManager) FindServiceInformation(search string) []*framework.ServiceInformation {
-	allServices := make([]*framework.ServiceInformation, 0)
-        for stack, _ := range sm.stacks {
-			services, err := sm.stacks[stack].FindServiceInformation(search)
-			if err != nil {
-				util.Log.Errorln(err)
-			}
-			if services != nil || len(services) != 0 {
-				allServices = append(allServices, services...)
-			}
-        }
+	var allServices []*framework.ServiceInformation
+	for stack := range sm.stacks {
+		services, err := sm.stacks[stack].FindServiceInformation(search)
+		if err != nil {
+			util.Log.Errorln(err)
+		}
+		if services != nil || len(services) != 0 {
+			allServices = append(allServices, services...)
+		}
+	}
 	return allServices
 }
 
-func (sm *StackManager) DeployedContainers () []*framework.ServiceInformation {
-        allServices := make([]*framework.ServiceInformation, 0)
-        for stack, _ := range sm.stacks {
-                services := sm.stacks[stack].getServices()
-                if services != nil || len(services) != 0 {
-                        allServices = append(allServices, services...)
-                }
-        }
-        return allServices
-	
+func (sm *StackManager) DeployedContainers() []*framework.ServiceInformation {
+	var allServices []*framework.ServiceInformation
+	for stack := range sm.stacks {
+		services := sm.stacks[stack].getServices()
+		if services != nil || len(services) != 0 {
+			allServices = append(allServices, services...)
+		}
+	}
+	return allServices
+
 }
 
 func (sm *StackManager) Rollback() {
-       util.Log.Infoln("Starting Rollback")
-       for stack, _ := range sm.stacks {
-               sm.stacks[stack].Rollback()
-       }
+	util.Log.Infoln("Starting Rollback")
+	for stack := range sm.stacks {
+		sm.stacks[stack].Rollback()
+	}
 }
 
 func (sm *StackManager) DeleteService(serviceId string) error {
 	util.Log.Infoln("Starting DeleteService")
-	for stack, _ := range sm.stacks {
+	for stack := range sm.stacks {
 		sm.stacks[stack].DeleteService(serviceId)
 	}
 	return nil

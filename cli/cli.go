@@ -2,43 +2,46 @@ package cli
 
 import (
 	"errors"
-	"fmt"
+	"io/ioutil"
 	"os"
+	"path/filepath"
+
+	"gopkg.in/yaml.v2"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/codegangsta/cli"
 	"github.com/latam-airlines/crane/cluster"
+	"github.com/latam-airlines/crane/configuration"
 	"github.com/latam-airlines/crane/util"
 	"github.com/latam-airlines/crane/version"
-	"github.com/codegangsta/cli"
-	_ "github.com/latam-airlines/mesos-framework-factory/marathon"
-	"github.com/latam-airlines/mesos-framework-factory/factory"
 )
 
 var stackManager cluster.CraneManager
-var logFile *os.File = nil
+var logFile *os.File
 
 type logConfig struct {
-	LogLevel     string
-	LogFormatter string
-	LogColored   bool
-	LogOutput    string
+	level     string
+	Formatter string
+	colored   bool
+	output    string
+	debug     bool
 }
 
-func setupLogger(debug bool, config logConfig) error {
+func setupLogger(config logConfig) error {
 	var err error
 
-	if util.Log.Level, err = log.ParseLevel(config.LogLevel); err != nil {
+	if util.Log.Level, err = log.ParseLevel(config.level); err != nil {
 		return err
 	}
 
-	if debug {
+	if config.debug {
 		util.Log.Level = log.DebugLevel
 	}
 
-	switch config.LogFormatter {
+	switch config.Formatter {
 	case "text":
 		formatter := new(log.TextFormatter)
-		formatter.ForceColors = config.LogColored
+		formatter.ForceColors = config.colored
 		formatter.FullTimestamp = true
 		util.Log.Formatter = formatter
 		break
@@ -50,7 +53,7 @@ func setupLogger(debug bool, config logConfig) error {
 		return errors.New("Formato de lo log desconocido")
 	}
 
-	switch config.LogOutput {
+	switch config.output {
 	case "console":
 		util.Log.Out = os.Stdout
 		break
@@ -64,51 +67,42 @@ func setupLogger(debug bool, config logConfig) error {
 	return nil
 }
 
+type parseConfig func(configFile string) (*configuration.Configuration, error)
+
+func readConfiguration(configFile string) (*configuration.Configuration, error) {
+	_, err := os.Stat(configFile)
+	if os.IsNotExist(err) {
+		return nil, err
+	}
+
+	configFile, err = filepath.Abs(configFile)
+	if err != nil {
+		return nil, err
+	}
+
+	var yamlFile []byte
+	if yamlFile, err = ioutil.ReadFile(configFile); err != nil {
+		return nil, err
+	}
+
+	var config configuration.Configuration
+	if err = yaml.Unmarshal(yamlFile, &config); err != nil {
+		return nil, err
+	}
+
+	return &config, nil
+}
+
 func globalFlags() []cli.Flag {
 	flags := []cli.Flag{
 		cli.BoolFlag{
 			Name:  "debug",
 			Usage: "Modo de verbosidad debug",
 		},
-		cli.StringSliceFlag{
-			Name:  "endpoint, ep",
-			Usage: "Endpoint de la API del Scheduler",
-		},
 		cli.StringFlag{
-			Name:  "framework",
-			Usage: "Scheduler you want to use to orchestrate your containers",
-		},
-		cli.BoolFlag{
-			Name:  "tls",
-			Usage: "Utiliza TLS en la comunicacion con los Endpoints",
-		},
-		cli.BoolFlag{
-			Name:   "tlsverify",
-			Usage:  "Utiliza TLS Verify en la comunicacion con los Endpoints",
-			EnvVar: "DOCKER_TLS_VERIFY",
-		},
-		cli.StringFlag{
-			Name:   "cert_path",
-			Usage:  "Directorio con los certificados",
-			EnvVar: "DOCKER_CERT_PATH",
-		},
-		cli.StringFlag{
-			Name:   "tlscacert",
-			Value:  "ca.pem",
-			Usage:  "Ruta relativa del archivo con el certificado CA",
-			EnvVar: "DEPLOYER_CERT_CA",
-		},
-		cli.StringFlag{
-			Name:   "tlscert",
-			Value:  "cert.pem",
-			Usage:  "Ruta relativa del arhivo con el certificado cliente",
-			EnvVar: "DEPLOYER_CERT_CERT",
-		},
-		cli.StringFlag{
-			Name:   "tlskey",
-			Value:  "key.pem",
-			Usage:  "Ruta relativa del arhivo con la llave del certificado cliente",
-			EnvVar: "DEPLOYER_CERT_KEY",
+			Name:  "config",
+			Value: "crane.yml",
+			Usage: "Ruta del archivo de configuración",
 		},
 		cli.StringFlag{
 			Name:   "log-level",
@@ -133,50 +127,35 @@ func globalFlags() []cli.Flag {
 			Usage:  "Output de los logs. console | file",
 			EnvVar: "DEPLOYER_LOG_OUTPUT",
 		},
-		cli.IntFlag{
-			Name:   "deploy-timeout",
-			Value:  30,
-			Usage:  "Deploy timeout in seconds, default 30 seconds",
-			EnvVar: "DEPLOYER_TIMEOUT",
-		},
 	}
 
 	return flags
 }
 
-func setupGlobalFlags(c *cli.Context) error {
-	var config logConfig = logConfig{}
-	config.LogLevel = c.String("log-level")
-	config.LogFormatter = c.String("log-formatter")
-	config.LogColored = c.Bool("log-colored")
-	config.LogOutput = c.String("log-output")
+func setupApplication(c *cli.Context, parser parseConfig) error {
+	logConfig := logConfig{}
+	logConfig.level = c.String("log-level")
+	logConfig.Formatter = c.String("log-formatter")
+	logConfig.colored = c.Bool("log-colored")
+	logConfig.output = c.String("log-output")
+	logConfig.debug = c.Bool("debug")
 
-	var err error
-
-	if err = setupLogger(c.Bool("debug"), config); err != nil {
-		fmt.Println("Nivel de log invalido")
+	err := setupLogger(logConfig)
+	if err != nil {
 		return err
 	}
 
-	frameworkType := c.String("framework")
-
-	stackManager = cluster.NewStackManager()
-
-	for _, ep := range c.StringSlice("endpoint") {
-		util.Log.Infof("Configuring scheduler for endpoint %s", ep)
-		params := make(map[string]interface{})
-		params["address"] = ep
-		params["deploy-timeout"] = c.Int("deploy-timeout")
-		clusterFramework, err := factory.Create(frameworkType, params)
-		if err != nil {
-			return errors.New(fmt.Sprintf("Error creating framework %s in %s. %s", frameworkType, ep, err.Error()))
-		}
-		stackManager.AppendStack(clusterFramework)
+	var appConfig *configuration.Configuration
+	if appConfig, err = parser(c.String("config")); err != nil {
+		return err
 	}
 
+	stackManager = cluster.NewStackManager(appConfig)
 	return nil
 }
 
+// RunApp Entrypoint de la Aplicacion.
+// Procesa los comandos y sus argumentos
 func RunApp() {
 
 	app := cli.NewApp()
@@ -187,7 +166,7 @@ func RunApp() {
 	app.Flags = globalFlags()
 
 	app.Before = func(c *cli.Context) error {
-		return setupGlobalFlags(c)
+		return setupApplication(c, readConfiguration)
 	}
 
 	app.Commands = commands
@@ -203,6 +182,5 @@ func RunApp() {
 	err = app.Run(os.Args)
 	if err != nil {
 		util.Log.Fatalln(err)
-		
 	}
 }

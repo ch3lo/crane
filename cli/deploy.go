@@ -6,14 +6,14 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"syscall"
-	"strconv"
 	"regexp"
+	"strconv"
 	"strings"
+	"syscall"
 
+	"github.com/codegangsta/cli"
 	"github.com/latam-airlines/crane/cluster"
 	"github.com/latam-airlines/crane/util"
-	"github.com/codegangsta/cli"
 	"github.com/latam-airlines/mesos-framework-factory"
 )
 
@@ -71,14 +71,14 @@ func deployFlags() []cli.Flag {
 				"Este valor es respecto al total de instancias." +
 				"Por ejemplo, si se despliegan 5 servicios y fallan ",
 		},
-                cli.StringSliceFlag{
-                        Name:  "constraint",
-                        Usage: "Add constraint to the deployment, ie --constraint=slave_name=beta4002, --constraint=hostname=UNIQUE",
-                },
-                cli.StringFlag{
-                        Name:  "beta",
-                        Usage: "Beta-Node to deploy to, ie --beta=beta4002",
-                },
+		cli.StringSliceFlag{
+			Name:  "constraint",
+			Usage: "Add constraint to the deployment, ie --constraint=slave_name=beta4002, --constraint=hostname=UNIQUE",
+		},
+		cli.StringFlag{
+			Name:  "beta",
+			Usage: "Beta-Node to deploy to, ie --beta=beta4002",
+		},
 	}
 }
 
@@ -90,7 +90,7 @@ func deployBefore(c *cli.Context) error {
 	if c.String("tag") == "" {
 		return errors.New("El TAG de la imagen esta vacio")
 	}
-	
+
 	if c.String("memory") != "" {
 		if _, err := strconv.ParseInt(c.String("memory"), 10, 64); err != nil {
 			return errors.New("Valor del parámetro memory invalido")
@@ -120,25 +120,25 @@ func applyPorts(ports []string, cfg *framework.ServiceConfig) error {
 	var validPort = regexp.MustCompile(`^[0-9]*\/(udp|tcp|UDP|TCP)$`)
 	for i, port := range ports {
 		if validPort.MatchString(port) {
-			cfg.Publish[i]=port
+			cfg.Publish[i] = port
 		} else {
 			return errors.New("Port does not match format, ie. 8080/tcp")
 		}
-        }
+	}
 	return nil
 }
 
-func applyConstraints(contextConstraints []string, beta string, cfg *framework.ServiceConfig) error{
+func applyConstraints(contextConstraints []string, beta string, cfg *framework.ServiceConfig) error {
 	constraints := make(map[string]string)
 	for _, constraint := range contextConstraints {
 		if !strings.Contains(constraint, "=") {
 			return errors.New("Constraint does not comply format key=value")
 		}
 		splits := strings.Split(constraint, "=")
-		constraints[splits[0]]=splits[1]
-        }
+		constraints[splits[0]] = splits[1]
+	}
 	if beta != "" {
-		constraints["slave_name"]=beta
+		constraints["slave_name"] = beta
 	}
 	if len(constraints) != 0 {
 		cfg.Constraints = constraints
@@ -169,12 +169,12 @@ func deployCmd(c *cli.Context) {
 		n, _ := strconv.ParseInt(c.String("memory"), 10, 64)
 		serviceConfig.Memory = int64(n)
 	}
-	
+
 	err = applyConstraints(c.StringSlice("constraint"), c.String("beta"), &serviceConfig)
 	if err != nil {
 		util.Log.Fatalln("Error reading constraints", err)
 	}
-	
+
 	handleDeploySigTerm(stackManager)
 	if stackManager.Deploy(serviceConfig, c.Int("instances"), c.Float64("tolerance")) {
 		services := stackManager.DeployedContainers()
