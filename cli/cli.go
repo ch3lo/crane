@@ -159,7 +159,6 @@ func setupGlobalFlags(c *cli.Context) error {
 	}
 
 	frameworkType := c.String("framework")
-
 	stackManager = cluster.NewStackManager()
 
 	for _, ep := range c.StringSlice("endpoint") {

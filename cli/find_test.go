@@ -10,19 +10,22 @@ import (
 )
 
 type StackManagerMock struct {}
-
-func (sm *StackManagerMock) FindServiceInformation(search string) []*framework.ServiceInformation {
-	services := make([]*framework.ServiceInformation, 1)
-	service := new(framework.ServiceInformation)
-	service.ID = "SABRE-SESSION-POOL"
-	service.Instances = make([]*framework.Instance, 1)
-	service.Instances[0] = new(framework.Instance)
-	services[0] = service
+func (sm *StackManagerMock) buildServiceDummyList() []*framework.ServiceInformation {
+        services := make([]*framework.ServiceInformation, 1)
+        service := new(framework.ServiceInformation)
+        service.ID = "SABRE-SESSION-POOL"
+        service.Instances = make([]*framework.Instance, 1)
+        service.Instances[0] = new(framework.Instance)
+	service.Instances[0].ID = "instance id"
+        services[0] = service
 	return services
+}
+func (sm *StackManagerMock) FindServiceInformation(search string) []*framework.ServiceInformation {
+	return sm.buildServiceDummyList()
 }
 func (sm *StackManagerMock) AppendStack(fh framework.Framework) {}
 func (sm *StackManagerMock) Deploy(serviceConfig framework.ServiceConfig, instances int, tolerance float64) bool { return true }
-func (sm *StackManagerMock) DeployedContainers () []*framework.ServiceInformation { return nil }
+func (sm *StackManagerMock) DeployedContainers () []*framework.ServiceInformation { return sm.buildServiceDummyList() }
 func (sm *StackManagerMock) Rollback() {}
 func (sm *StackManagerMock) DeleteService(string) error {return nil}
 

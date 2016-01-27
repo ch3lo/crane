@@ -35,6 +35,10 @@
                 {
                         "ImportPath": "github.com/stretchr/testify",
                         "Rev": "f390dcf405f7b83c997eac1b06768bb9f44dec18"
+                },
+                {
+                        "ImportPath": "github.com/stretchr/objx",
+                        "Rev": "1a9d0bb9f541897e62256577b352fdbc1fb4fd94"
                 }
 	]
 }

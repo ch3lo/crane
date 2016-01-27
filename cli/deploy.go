@@ -107,7 +107,7 @@ func deployBefore(c *cli.Context) error {
 }
 
 type callbackResume struct {
-	RegisterId string `json:"RegisterId"`
+	Id string `json:Id"`
 	Address    string `json:"Address"`
 }
 
@@ -152,7 +152,7 @@ func deployCmd(c *cli.Context) {
 	if err != nil {
 		util.Log.Fatalln("No se pudo procesar el archivo con variables de entorno", err)
 	}
-
+	
 	for _, v := range c.StringSlice("env") {
 		envs = append(envs, v)
 	}
@@ -184,8 +184,8 @@ func deployCmd(c *cli.Context) {
 				for _, val := range instance.Ports {
 					util.Log.Infof("Se desplegó %s en host %s y dirección %s", instance.ID, instance.Host, val)
 					instanceInfo := callbackResume{
-						RegisterId: instance.ID,
-						Address:    string(val.Internal),
+						Id: instance.ID,
+						Address:    instance.Host + ":" + strconv.FormatInt(val.Internal, 10),
 					}
 					resume = append(resume, instanceInfo)
 				}

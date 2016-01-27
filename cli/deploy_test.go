@@ -2,8 +2,10 @@ package cli
 
 import (
         "testing"
+	"flag"
         "github.com/stretchr/testify/assert"
 	"github.com/latam-airlines/mesos-framework-factory"
+	"github.com/codegangsta/cli"
 )
 
 func TestApplyPortsNil(t *testing.T) {
@@ -77,4 +79,85 @@ func TestApplyConstraintsError(t *testing.T) {
 	cfg := new(framework.ServiceConfig)
         err := applyConstraints(constraints, "", cfg)
 	assert.NotNil(t, err, "Should fail")
+}
+
+func TestDeployBeforeError(t *testing.T) {
+        set := flag.NewFlagSet("test", 0)
+        ctx := cli.NewContext(nil, set, nil)
+        err := deployBefore(ctx)
+        assert.NotNil(t, err, "Should throw error image empty")
+	set.String("image", "someImage", "")
+        ctx = cli.NewContext(nil, set, nil)
+        err = deployBefore(ctx)
+        assert.NotNil(t, err, "Should throw error tag empty")
+        set.String("tag", "someTag", "")
+        set.String("memory", "some memory", "")
+        ctx = cli.NewContext(nil, set, nil)
+        err = deployBefore(ctx)
+	assert.NotNil(t, err, "Should throw error memory empty")
+
+	set = flag.NewFlagSet("test", 0)
+	set.String("image", "someImage", "")
+	set.String("tag", "someTag", "")
+        set.String("memory", "512", "")
+        envSlice := new(cli.StringSlice)
+        envSlice.Set("/tmp/bla.txt")
+
+        envFlag := cli.StringSliceFlag{
+                        Name:  "env-file",
+                        Value: envSlice,
+        }
+	envFlag.Apply(set)
+        ctx = cli.NewContext(nil, set, nil)
+        err = deployBefore(ctx)
+        assert.NotNil(t, err, "Should throw error file does not exist")
+}
+
+func TestDeployBefore(t *testing.T) {
+        set := flag.NewFlagSet("test", 0)
+        set.String("image", "someImage", "")
+        set.String("tag", "someTag", "")
+        set.String("memory", "512", "")
+        envSlice := new(cli.StringSlice)
+        envSlice.Set("deploy.go")
+
+        envFlag := cli.StringSliceFlag{
+                        Name:  "env-file",
+                        Value: envSlice,
+        }
+        envFlag.Apply(set)
+        ctx := cli.NewContext(nil, set, nil)
+        err := deployBefore(ctx)
+        assert.Nil(t, err, "Should pass without any error")
+}
+
+func TestDeployCmd (t *testing.T) {
+	stackManager = createStackManagerMock()
+	set := flag.NewFlagSet("test", 0)
+        set.String("image", "someImage", "")
+        set.String("tag", "someTag", "")
+        set.String("memory", "512", "")
+        envFileSlice := new(cli.StringSlice)
+        envFileSlice.Set("deploy.go")
+
+        envFileFlag := cli.StringSliceFlag{
+                        Name:  "env-file",
+                        Value: envFileSlice,
+        }
+        envFileFlag.Apply(set)
+        envSlice := new(cli.StringSlice)
+        envSlice.Set("SOME_ENV_VAR")
+
+        envFlag := cli.StringSliceFlag{
+                        Name:  "env",
+                        Value: envSlice,
+        }
+        envFlag.Apply(set)
+        set.String("framework", "marathon", "")
+
+        endpointFlag := createEndpointSliceFlag()
+        endpointFlag.Apply(set)
+        ctx := cli.NewContext(nil, set, nil)
+	
+	deployCmd(ctx)
 }
