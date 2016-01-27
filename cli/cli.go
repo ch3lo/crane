@@ -148,7 +148,10 @@ func setupApplication(c *cli.Context, parser parseConfig) error {
 		return err
 	}
 
-	stackManager = cluster.NewStackManager(appConfig)
+	stackManager, err = cluster.NewStackManager(appConfig)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

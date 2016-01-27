@@ -77,7 +77,7 @@ func TestConstructor(t *testing.T) {
 			},
 		},
 	}
-	sm := NewStackManager(config)
+	sm, _ := NewStackManager(config)
 	assert.NotNil(t, sm, "Instance should be healthy")
 	v := reflect.ValueOf(sm).Elem()
 	stacks := v.FieldByName("stacks")
@@ -155,4 +155,20 @@ func TestDeployedContainers(t *testing.T) {
 	stackMock.On("getServices").Return(mock.AnythingOfType("[]*framework.ServiceInformation"))
 	sm.DeployedContainers()
 	stackMock.AssertExpectations(t)
+}
+
+func TestInvalidFramework(t *testing.T) {
+                config := &configuration.Configuration{
+                        Clusters: map[string]configuration.Cluster{
+                                "local": {
+                                        Framework: configuration.Framework{
+                                                "otherFramework": configuration.Parameters{
+                                                        "address": "http://localhost:8011",
+                                                },
+                                        },
+                                },
+                        },
+                }
+	_, err := NewStackManager(config)
+        assert.NotNil(t, err, "Should return error")
 }

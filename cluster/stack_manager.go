@@ -4,6 +4,7 @@ import (
 	"github.com/latam-airlines/crane/util"
 	"github.com/latam-airlines/mesos-framework-factory"
 	"github.com/latam-airlines/crane/configuration"
+	"errors"
 )
 
 type CraneManager interface {
@@ -19,18 +20,21 @@ type StackManager struct {
 	stackNotification chan StackStatus
 }
 
-func NewStackManager(config *configuration.Configuration) CraneManager {
+func NewStackManager(config *configuration.Configuration) (CraneManager, error) {
 	sm := new(StackManager)
 	sm.stacks = make(map[string]StackInterface)
 	sm.stackNotification = make(chan StackStatus, 100)
 	
-	sm.setupStacks(config.Clusters)
+	err := sm.setupStacks(config.Clusters)
+	if err != nil {
+		return nil, err
+	}
 
-	return sm
+	return sm, nil
 }
 
 // setupClusters initializes the cluster, mapping the id of the cluster as its key
-func (sm *StackManager) setupStacks(config map[string]configuration.Cluster) {
+func (sm *StackManager) setupStacks(config map[string]configuration.Cluster) error {
 	for key := range config {
 		s, err := NewStack(key, sm.stackNotification, config[key])
 		if err != nil {
@@ -39,7 +43,7 @@ func (sm *StackManager) setupStacks(config map[string]configuration.Cluster) {
 				util.Log.Warnln(err.Error())
 				continue
 			default:
-				util.Log.Fatalln(err.Error())
+				return err
 			}
 		}
 
@@ -48,8 +52,9 @@ func (sm *StackManager) setupStacks(config map[string]configuration.Cluster) {
 	}
 
 	if len(sm.stacks) == 0 {
-		util.Log.Fatalln("Should exist at least one cluster")
+		return errors.New("Should exist at least one cluster")
 	}
+	return nil
 }
 
 func (sm *StackManager) Deploy(serviceConfig framework.ServiceConfig, instances int, tolerance float64) bool {

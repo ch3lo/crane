@@ -8,12 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"reflect"
-	"testing"
 )
-
-func TestCli(t *testing.T) {
-	suite.Run(t, new(CliSuite))
-}
 
 type CliSuite struct {
 	suite.Suite
@@ -96,24 +91,4 @@ func (suite *CliSuite) TestDisabledFramework() {
 	v := reflect.ValueOf(stackManager).Elem()
 	stacks := v.FieldByName("stacks")
 	assert.Equal(suite.T(), 1, stacks.Len(), "Cli should instantiate one stack")
-}
-
-func (suite *CliSuite) TestInvalidFramework() {
-	ctx := cli.NewContext(nil, suite.globalSet, nil)
-	err := setupApplication(ctx, func(configFile string) (*configuration.Configuration, error) {
-                config := &configuration.Configuration{
-                        Clusters: map[string]configuration.Cluster{
-                                "local": {
-                                        Framework: configuration.Framework{
-                                                "otherFramework": configuration.Parameters{
-                                                        "address": "http://localhost:8011",
-                                                },
-                                        },
-                                },
-                        },
-                }
-
-                return config, nil
-	})
-	assert.NotNil(suite.T(), err, "Should return error")
 }
