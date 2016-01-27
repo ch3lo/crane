@@ -152,7 +152,7 @@ func deployCmd(c *cli.Context) {
 	if err != nil {
 		util.Log.Fatalln("No se pudo procesar el archivo con variables de entorno", err)
 	}
-
+	
 	for _, v := range c.StringSlice("env") {
 		envs = append(envs, v)
 	}
