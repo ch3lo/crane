@@ -4,6 +4,7 @@ import (
 	"testing"
 	"reflect"
 	"os"
+	"time"
 	"flag"
 	"github.com/codegangsta/cli"
 	"github.com/stretchr/testify/assert"
@@ -40,6 +41,13 @@ func TestDeployTimeout(t *testing.T) {
 	stackManager = createStackManagerMock()
 	os.Args = []string {"crane", "--framework=marathon", "--endpoint=http://localhost:8081", "--deploy-timeout=20", "deploy", "--image=nginx", "--tag=latest"}
 	RunApp()
+	
+	defer func() {
+		os.Args = []string {"crane", "--framework=marathon", "--endpoint=http://localhost:8081", "delete", "--service-id=nginx/latest"}
+		RunApp()
+		time.Sleep(time.Duration(5)*time.Second)
+	}()
+	
 	assert.Nil(t, nil, "RunApp should pass")
 }
 
@@ -47,5 +55,12 @@ func TestDeployTimeoutOptional(t *testing.T) {
 	stackManager = createStackManagerMock()
 	os.Args = []string {"crane", "--framework=marathon", "--endpoint=http://localhost:8081", "deploy", "--image=nginx", "--tag=latest"}
 	RunApp()
+	
+	defer func() {
+		os.Args = []string {"crane", "--framework=marathon", "--endpoint=http://localhost:8081", "delete", "--service-id=nginx/latest"}
+		RunApp()
+		time.Sleep(time.Duration(5)*time.Second)
+	}()
+	
 	assert.Nil(t, nil, "Error on RunApp should be nil")
 }
