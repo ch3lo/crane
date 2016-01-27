@@ -98,13 +98,13 @@ func deployBefore(c *cli.Context) error {
 	}
 
 	if c.Float64("cpu") < 0 {
-		return errors.New("Valor del parámetro cpu no debe ser negativo")
+		return errors.New("Cpu flag value should not be negative")
 	}
 	
 	if c.String("framework") == "marathon" && c.Float64("cpu") > 1.0 {
-		return errors.New("Valor del parámetro cpu fuera de rango para marathon")
+		return errors.New("Cpu flag value should not be > 1.0 for marathon")
 	} else if c.String("framework") == "swarm" && c.Float64("cpu") > 1024 {
-		return errors.New("Valor del parámetro cpu fuera de rango para swarm")
+		return errors.New("Cpu flag value should not be > 1024.0 for swarm")
 	}
 
 	for _, file := range c.StringSlice("env-file") {
