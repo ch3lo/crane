@@ -79,6 +79,16 @@ func deployFlags() []cli.Flag {
 			Name:  "beta",
 			Usage: "Beta-Node to deploy to, ie --beta=beta4002",
 		},
+		cli.Float64Flag{
+			Name:  "minimumHealthCapacity",
+			Value: 1.0,
+			Usage: "Number between 0and 1 that is multiplied with the instance count. This is the minimum number of healthy nodes that do not sacrifice overall application purpose, ie --minimumHealthCapacity=0.8",
+		},
+		cli.Float64Flag{
+			Name:  "maximumOverCapacity",
+			Value: 0.2,
+			Usage: "Number between 0 and 1 which is multiplied with the instance count. This is the maximum number of additional instances launched at any point of time during the upgrade process, i.e. maximumOverCapacity=0.2",
+		},
 	}
 }
 
@@ -112,6 +122,15 @@ func deployBefore(c *cli.Context) error {
 			return errors.New(fmt.Sprintf("El archivo %s con variables de entorno no existe", file))
 		}
 	}
+	
+	if c.Float64("minimumHealthCapacity") < 0.0 || c.Float64("minimumHealthCapacity") > 1.0 {
+		return errors.New("MinimumHealthCapacity flag value should be between 0.0 and 1.0")
+	}
+	
+	if c.Float64("maximumOverCapacity") < 0.0 || c.Float64("maximumOverCapacity") > 1.0 {
+		return errors.New("MaximumOverCapacity flag value should be between 0.0 and 1.0")
+	}
+
 
 	return nil
 }
