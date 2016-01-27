@@ -1,8 +1,10 @@
 package cli
 
 import (
-        "testing"
-        "github.com/stretchr/testify/assert"
+	"testing"
+	"flag"
+	"github.com/codegangsta/cli"
+	"github.com/stretchr/testify/assert"
 	"github.com/latam-airlines/mesos-framework-factory"
 )
 
@@ -76,5 +78,48 @@ func TestApplyConstraintsError(t *testing.T) {
 	constraints[0] = "key2;val2"	
 	cfg := new(framework.ServiceConfig)
         err := applyConstraints(constraints, "", cfg)
+	assert.NotNil(t, err, "Should fail")
+}
+
+func TestCpuFlag(t *testing.T) {
+	set := flag.NewFlagSet("test", 0)
+	set.String("framework", "marathon", "some hint")
+	set.String("image", "nginx", "some hint")
+	set.String("tag", "latest", "some hint")
+	set.Float64("cpu", 0.25, "usage")
+	ctx := cli.NewContext(nil, set, nil)
+	err := deployBefore(ctx)
+	assert.Nil(t, err, "Should be fine")
+}
+
+func TestCpuFlagNegative(t *testing.T) {
+	set := flag.NewFlagSet("test", 0)
+	set.String("image", "nginx", "some hint")
+	set.String("tag", "latest", "some hint")
+	set.Float64("cpu", -2.1, "usage")
+	ctx := cli.NewContext(nil, set, nil)
+	err := deployBefore(ctx)
+	assert.NotNil(t, err, "Should fail")
+}
+
+func TestCpuFlagMarathonWrongRange(t *testing.T) {
+	set := flag.NewFlagSet("test", 0)
+	set.String("framework", "marathon", "some hint")
+	set.String("image", "nginx", "some hint")
+	set.String("tag", "latest", "some hint")
+	set.Float64("cpu", 1.1, "usage")
+	ctx := cli.NewContext(nil, set, nil)
+	err := deployBefore(ctx)
+	assert.NotNil(t, err, "Should fail")
+}
+
+func TestCpuFlagSwarmWrongRange(t *testing.T) {
+	set := flag.NewFlagSet("test", 0)
+	set.String("framework", "swarm", "some hint")
+	set.String("image", "nginx", "some hint")
+	set.String("tag", "latest", "some hint")
+	set.Float64("cpu", 1025, "usage")
+	ctx := cli.NewContext(nil, set, nil)
+	err := deployBefore(ctx)
 	assert.NotNil(t, err, "Should fail")
 }

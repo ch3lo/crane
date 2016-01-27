@@ -42,7 +42,7 @@ func deployFlags() []cli.Flag {
 			Name:  "port",
 			Usage: "Puerto interno del contenedor a exponer en el Host",
 		},
-		cli.IntFlag{
+		cli.Float64Flag{
 			Name:  "cpu",
 			Value: 0,
 			Usage: "Cantidad de CPU reservadas para el servicio.",
@@ -95,6 +95,16 @@ func deployBefore(c *cli.Context) error {
 		if _, err := strconv.ParseInt(c.String("memory"), 10, 64); err != nil {
 			return errors.New("Valor del parámetro memory invalido")
 		}
+	}
+
+	if c.Float64("cpu") < 0 {
+		return errors.New("Valor del parámetro cpu no debe ser negativo")
+	}
+	
+	if c.String("framework") == "marathon" && c.Float64("cpu") > 1.0 {
+		return errors.New("Valor del parámetro cpu fuera de rango para marathon")
+	} else if c.String("framework") == "swarm" && c.Float64("cpu") > 1024 {
+		return errors.New("Valor del parámetro cpu fuera de rango para swarm")
 	}
 
 	for _, file := range c.StringSlice("env-file") {
@@ -158,7 +168,7 @@ func deployCmd(c *cli.Context) {
 	}
 
 	serviceConfig := framework.ServiceConfig{
-		CPUShares: c.Int("cpu"),
+		CPUShares: c.Float64("cpu"),
 		Envs:      envs,
 		ImageName: c.String("image"),
 		Tag:       c.String("tag"),
