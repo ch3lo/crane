@@ -1,10 +1,10 @@
 package cluster
 
 import (
+	"errors"
+	"github.com/latam-airlines/crane/configuration"
 	"github.com/latam-airlines/crane/util"
 	"github.com/latam-airlines/mesos-framework-factory"
-	"github.com/latam-airlines/crane/configuration"
-	"errors"
 )
 
 type CraneManager interface {
@@ -24,7 +24,7 @@ func NewStackManager(config *configuration.Configuration) (CraneManager, error) 
 	sm := new(StackManager)
 	sm.stacks = make(map[string]StackInterface)
 	sm.stackNotification = make(chan StackStatus, 100)
-	
+
 	err := sm.setupStacks(config.Clusters)
 	if err != nil {
 		return nil, err

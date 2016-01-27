@@ -67,7 +67,7 @@ func (s *StackMock) Rollback() {
 func TestConstructor(t *testing.T) {
 	config := &configuration.Configuration{
 		Clusters: map[string]configuration.Cluster{
-			"local": configuration.Cluster{
+			"local": {
 				Framework: configuration.Framework{
 					"marathon": configuration.Parameters{
 						"address":        "http://localhost:8081/v2",
@@ -158,17 +158,17 @@ func TestDeployedContainers(t *testing.T) {
 }
 
 func TestInvalidFramework(t *testing.T) {
-                config := &configuration.Configuration{
-                        Clusters: map[string]configuration.Cluster{
-                                "local": {
-                                        Framework: configuration.Framework{
-                                                "otherFramework": configuration.Parameters{
-                                                        "address": "http://localhost:8011",
-                                                },
-                                        },
-                                },
-                        },
-                }
+	config := &configuration.Configuration{
+		Clusters: map[string]configuration.Cluster{
+			"local": {
+				Framework: configuration.Framework{
+					"otherFramework": configuration.Parameters{
+						"address": "http://localhost:8011",
+					},
+				},
+			},
+		},
+	}
 	_, err := NewStackManager(config)
-        assert.NotNil(t, err, "Should return error")
+	assert.NotNil(t, err, "Should return error")
 }

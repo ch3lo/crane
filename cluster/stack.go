@@ -2,8 +2,8 @@ package cluster
 
 import (
 	"fmt"
-	"github.com/latam-airlines/crane/configuration"
 	log "github.com/Sirupsen/logrus"
+	"github.com/latam-airlines/crane/configuration"
 	"github.com/latam-airlines/crane/util"
 	"github.com/latam-airlines/mesos-framework-factory"
 	"github.com/latam-airlines/mesos-framework-factory/factory"
