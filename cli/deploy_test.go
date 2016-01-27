@@ -161,3 +161,46 @@ func TestDeployCmd(t *testing.T) {
 
 	deployCmd(ctx)
 }
+
+func TestCpuFlag(t *testing.T) {
+	set := flag.NewFlagSet("test", 0)
+	set.String("framework", "marathon", "some hint")
+	set.String("image", "nginx", "some hint")
+	set.String("tag", "latest", "some hint")
+	set.Float64("cpu", 0.25, "usage")
+	ctx := cli.NewContext(nil, set, nil)
+	err := deployBefore(ctx)
+	assert.Nil(t, err, "Should be fine")
+}
+
+func TestCpuFlagNegative(t *testing.T) {
+	set := flag.NewFlagSet("test", 0)
+	set.String("image", "nginx", "some hint")
+	set.String("tag", "latest", "some hint")
+	set.Float64("cpu", -2.1, "usage")
+	ctx := cli.NewContext(nil, set, nil)
+	err := deployBefore(ctx)
+	assert.NotNil(t, err, "Should fail")
+}
+
+func TestCpuFlagMarathonWrongRange(t *testing.T) {
+	set := flag.NewFlagSet("test", 0)
+	set.String("framework", "marathon", "some hint")
+	set.String("image", "nginx", "some hint")
+	set.String("tag", "latest", "some hint")
+	set.Float64("cpu", 1.1, "usage")
+	ctx := cli.NewContext(nil, set, nil)
+	err := deployBefore(ctx)
+	assert.NotNil(t, err, "Should fail")
+}
+
+func TestCpuFlagSwarmWrongRange(t *testing.T) {
+	set := flag.NewFlagSet("test", 0)
+	set.String("framework", "swarm", "some hint")
+	set.String("image", "nginx", "some hint")
+	set.String("tag", "latest", "some hint")
+	set.Float64("cpu", 1025, "usage")
+	ctx := cli.NewContext(nil, set, nil)
+	err := deployBefore(ctx)
+	assert.NotNil(t, err, "Should fail")
+}
