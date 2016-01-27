@@ -6,12 +6,12 @@ import (
 	"os"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/codegangsta/cli"
 	"github.com/latam-airlines/crane/cluster"
 	"github.com/latam-airlines/crane/util"
 	"github.com/latam-airlines/crane/version"
-	"github.com/codegangsta/cli"
-	_ "github.com/latam-airlines/mesos-framework-factory/marathon"
 	"github.com/latam-airlines/mesos-framework-factory/factory"
+	_ "github.com/latam-airlines/mesos-framework-factory/marathon"
 )
 
 var stackManager cluster.CraneManager
@@ -202,6 +202,6 @@ func RunApp() {
 	err = app.Run(os.Args)
 	if err != nil {
 		util.Log.Fatalln(err)
-		
+
 	}
 }

@@ -2,8 +2,8 @@ package cli
 
 import (
 	"errors"
-	"github.com/latam-airlines/crane/util"
 	"github.com/codegangsta/cli"
+	"github.com/latam-airlines/crane/util"
 )
 
 func deleteFlags() []cli.Flag {
@@ -25,7 +25,7 @@ func deleteBefore(c *cli.Context) error {
 func deleteCmd(c *cli.Context) {
 	err := stackManager.DeleteService(c.String("service-id"))
 	if err != nil {
-		util.Log.Fatalln("Error deleting service", err)	
+		util.Log.Fatalln("Error deleting service", err)
 	} else {
 		util.Log.Infoln("Service deleted: ", c.String("service-id"))
 	}

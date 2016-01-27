@@ -1,13 +1,13 @@
 package cluster
 
 import (
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"testing"
-	"time"
-	"reflect"
 	"github.com/latam-airlines/mesos-framework-factory"
 	"github.com/latam-airlines/mesos-framework-factory/factory"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"reflect"
+	"testing"
+	"time"
 )
 
 type StackMock struct {
@@ -15,7 +15,7 @@ type StackMock struct {
 	mockId int
 }
 
-func (s *StackMock) getServices() []*framework.ServiceInformation { 
+func (s *StackMock) getServices() []*framework.ServiceInformation {
 	s.Called()
 	services := make([]*framework.ServiceInformation, 1)
 	service := new(framework.ServiceInformation)
@@ -26,7 +26,7 @@ func (s *StackMock) getServices() []*framework.ServiceInformation {
 	return services
 }
 
-func (s *StackMock) createId() string { 
+func (s *StackMock) createId() string {
 	s.Called()
 	return ""
 }
@@ -37,8 +37,8 @@ func (s *StackMock) undeployInstance(instance string) {
 
 func (s *StackMock) DeployCheckAndNotify(serviceConfig framework.ServiceConfig, instances int, tolerance float64, ch chan int) {
 	s.Called(serviceConfig, instances, tolerance, ch)
-	
-	if (s.mockId == 1) {
+
+	if s.mockId == 1 {
 		ch <- 0 // ok
 	} else {
 		ch <- 1 // fails
@@ -83,23 +83,23 @@ func TestDeployMethod(t *testing.T) {
 	sm := new(StackManager)
 	sm.stacks = make(map[string]StackInterface)
 	sm.stackNotification = make(chan StackStatus, 100)
-	
+
 	svc := framework.ServiceConfig{}
 	//ch := make(chan int)
-	
+
 	stackMock := new(StackMock)
 	stackMock.mockId = 1
-	stackMock.On("Rollback").Return().On("DeployCheckAndNotify", svc, 2, 0.0, mock.AnythingOfType("chan int")).WaitUntil(time.After(500*time.Millisecond)).Return()
+	stackMock.On("Rollback").Return().On("DeployCheckAndNotify", svc, 2, 0.0, mock.AnythingOfType("chan int")).WaitUntil(time.After(500 * time.Millisecond)).Return()
 	key := sm.createId()
 	sm.stacks[key] = stackMock
 	stackMock = new(StackMock)
 	stackMock.mockId = 2
-	stackMock.On("Rollback").Return().On("DeployCheckAndNotify", svc, 2, 0.0, mock.AnythingOfType("chan int")).WaitUntil(time.After(500*time.Millisecond)).Return()
+	stackMock.On("Rollback").Return().On("DeployCheckAndNotify", svc, 2, 0.0, mock.AnythingOfType("chan int")).WaitUntil(time.After(500 * time.Millisecond)).Return()
 	key = sm.createId()
 	sm.stacks[key] = stackMock
 	sm.Deploy(svc, 2, 0.0)
 	stackMock.AssertExpectations(t)
-	
+
 }
 
 func TestDeleteService(t *testing.T) {
@@ -112,7 +112,7 @@ func TestDeleteService(t *testing.T) {
 	sm.stacks[key] = stackMock
 	stackMock.On("DeleteService", serviceId).Return(nil)
 	sm.DeleteService(serviceId)
-	stackMock.AssertExpectations(t)	
+	stackMock.AssertExpectations(t)
 }
 
 func TestFindServiceInformation(t *testing.T) {
@@ -125,7 +125,7 @@ func TestFindServiceInformation(t *testing.T) {
 	search := "search"
 	stackMock.On("FindServiceInformation", search).Return(mock.AnythingOfType("[]*framework.ServiceInformation"))
 	sm.FindServiceInformation(search)
-	stackMock.AssertExpectations(t)	
+	stackMock.AssertExpectations(t)
 }
 
 func TestRollback(t *testing.T) {
@@ -149,6 +149,6 @@ func TestDeployedContainers(t *testing.T) {
 	sm.stacks[key] = stackMock
 	stackMock.On("getServices").Return(mock.AnythingOfType("[]*framework.ServiceInformation"))
 	sm.DeployedContainers()
-	stackMock.AssertExpectations(t)	
-	
+	stackMock.AssertExpectations(t)
+
 }

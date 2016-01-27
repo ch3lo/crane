@@ -1,12 +1,12 @@
 package cluster
 
 import (
+	"fmt"
 	"github.com/Pallinder/go-randomdata"
 	log "github.com/Sirupsen/logrus"
 	"github.com/latam-airlines/crane/util"
-	"fmt"
-	"regexp"
 	"github.com/latam-airlines/mesos-framework-factory"
+	"regexp"
 )
 
 type StackStatus int
@@ -79,7 +79,6 @@ func (s *Stack) createId() string {
 	}
 }
 
-
 func (s *Stack) DeployCheckAndNotify(serviceConfig framework.ServiceConfig, instances int, tolerance float64, ch chan int) {
 	service, err := s.frameworkApiHelper.DeployService(serviceConfig, instances)
 	if err != nil {
@@ -88,7 +87,7 @@ func (s *Stack) DeployCheckAndNotify(serviceConfig framework.ServiceConfig, inst
 	} else {
 		ch <- 0 // success
 	}
-	services := make([]*framework.ServiceInformation,0)
+	services := make([]*framework.ServiceInformation, 0)
 	services = append(services, service)
 	s.services = services
 }
@@ -106,9 +105,9 @@ func (s *Stack) Rollback() {
 }
 
 func (s *Stack) FindServiceInformation(search string) ([]*framework.ServiceInformation, error) {
-	services , err := s.frameworkApiHelper.FindServiceInformation(&framework.ImageNameAndImageTagRegexpCriteria{regexp.MustCompile(search)})
+	services, err := s.frameworkApiHelper.FindServiceInformation(&framework.ImageNameAndImageTagRegexpCriteria{regexp.MustCompile(search)})
 	if err != nil {
-		return nil , err
+		return nil, err
 	}
 	s.services = services
 	return s.services, nil

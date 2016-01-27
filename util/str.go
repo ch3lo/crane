@@ -2,7 +2,7 @@ package util
 
 import (
 	"strings"
-	)
+)
 
 func MaskEnv(unmaskedEnvs []string) []string {
 	var maskedEnvs []string
