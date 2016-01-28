@@ -31,6 +31,10 @@ func handleDeploySigTerm(sm cluster.CraneManager) {
 func deployFlags() []cli.Flag {
 	return []cli.Flag{
 		cli.StringFlag{
+			Name:  "service-id",
+			Usage: "Id of the service",
+		},
+		cli.StringFlag{
 			Name:  "image",
 			Usage: "Nombre de la imagen",
 		},
@@ -93,17 +97,21 @@ func deployFlags() []cli.Flag {
 }
 
 func deployBefore(c *cli.Context) error {
+	if c.String("service-id") == "" {
+		return errors.New("Service-id is empty")
+	}
+
 	if c.String("image") == "" {
-		return errors.New("El nombre de la imagen esta vacio")
+		return errors.New("The name of the image is empty")
 	}
 
 	if c.String("tag") == "" {
-		return errors.New("El TAG de la imagen esta vacio")
+		return errors.New("The Tag of the image is empty")
 	}
 
 	if c.String("memory") != "" {
 		if _, err := strconv.ParseInt(c.String("memory"), 10, 64); err != nil {
-			return errors.New("Valor del parámetro memory invalido")
+			return errors.New("Invalid value of paramter memory")
 		}
 	}
 
@@ -186,6 +194,7 @@ func deployCmd(c *cli.Context) {
 	}
 
 	serviceConfig := framework.ServiceConfig{
+		ServiceID: c.String("service-id"),
 		CPUShares: c.Float64("cpu"),
 		Envs:      envs,
 		ImageName: c.String("image"),
@@ -193,7 +202,6 @@ func deployCmd(c *cli.Context) {
 		MinimumHealthCapacity: c.Float64("minimumHealthCapacity"),
 		MaximumOverCapacity:   c.Float64("maximumOverCapacity"),
 	}
-	serviceConfig.ConvertImageTagToServiceId()
 	applyPorts(c.StringSlice("port"), &serviceConfig)
 	if c.String("memory") != "" {
 		n, _ := strconv.ParseInt(c.String("memory"), 10, 64)

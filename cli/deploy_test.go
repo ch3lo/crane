@@ -85,11 +85,18 @@ func TestDeployBeforeError(t *testing.T) {
 	set := flag.NewFlagSet("test", 0)
 	ctx := cli.NewContext(nil, set, nil)
 	err := deployBefore(ctx)
+	assert.NotNil(t, err, "Should throw error service-id empty")
+
+	set.String("service-id", "MyServiceId", "")
+	ctx = cli.NewContext(nil, set, nil)
+	err = deployBefore(ctx)
 	assert.NotNil(t, err, "Should throw error image empty")
+
 	set.String("image", "someImage", "")
 	ctx = cli.NewContext(nil, set, nil)
 	err = deployBefore(ctx)
 	assert.NotNil(t, err, "Should throw error tag empty")
+
 	set.String("tag", "someTag", "")
 	set.String("memory", "some memory", "")
 	ctx = cli.NewContext(nil, set, nil)
@@ -97,6 +104,7 @@ func TestDeployBeforeError(t *testing.T) {
 	assert.NotNil(t, err, "Should throw error memory empty")
 
 	set = flag.NewFlagSet("test", 0)
+	set.String("service-id", "MyServiceId", "")
 	set.String("image", "someImage", "")
 	set.String("tag", "someTag", "")
 	set.String("memory", "512", "")
@@ -115,6 +123,7 @@ func TestDeployBeforeError(t *testing.T) {
 
 func TestDeployBefore(t *testing.T) {
 	set := flag.NewFlagSet("test", 0)
+	set.String("service-id", "MyServiceId", "")
 	set.String("image", "someImage", "")
 	set.String("tag", "someTag", "")
 	set.String("memory", "512", "")
@@ -134,6 +143,7 @@ func TestDeployBefore(t *testing.T) {
 func TestDeployCmd(t *testing.T) {
 	stackManager = createStackManagerMock()
 	set := flag.NewFlagSet("test", 0)
+	set.String("service-id", "MyServiceId", "")
 	set.String("image", "someImage", "")
 	set.String("tag", "someTag", "")
 	set.String("memory", "512", "")
@@ -164,6 +174,7 @@ func TestDeployCmd(t *testing.T) {
 
 func TestCpuFlag(t *testing.T) {
 	set := flag.NewFlagSet("test", 0)
+	set.String("service-id", "MyServiceId", "")
 	set.String("framework", "marathon", "some hint")
 	set.String("image", "nginx", "some hint")
 	set.String("tag", "latest", "some hint")
@@ -175,6 +186,7 @@ func TestCpuFlag(t *testing.T) {
 
 func TestCpuFlagNegative(t *testing.T) {
 	set := flag.NewFlagSet("test", 0)
+	set.String("service-id", "MyServiceId", "")
 	set.String("image", "nginx", "some hint")
 	set.String("tag", "latest", "some hint")
 	set.Float64("cpu", -2.1, "usage")
@@ -185,6 +197,7 @@ func TestCpuFlagNegative(t *testing.T) {
 
 func TestCpuFlagMarathonWrongRange(t *testing.T) {
 	set := flag.NewFlagSet("test", 0)
+	set.String("service-id", "MyServiceId", "")
 	set.String("framework", "marathon", "some hint")
 	set.String("image", "nginx", "some hint")
 	set.String("tag", "latest", "some hint")
@@ -196,6 +209,7 @@ func TestCpuFlagMarathonWrongRange(t *testing.T) {
 
 func TestCpuFlagSwarmWrongRange(t *testing.T) {
 	set := flag.NewFlagSet("test", 0)
+	set.String("service-id", "MyServiceId", "")
 	set.String("framework", "swarm", "some hint")
 	set.String("image", "nginx", "some hint")
 	set.String("tag", "latest", "some hint")
@@ -218,6 +232,7 @@ func createEndpointSliceFlag() cli.StringSliceFlag {
 
 func TestMinimumHealthCapacityFlag(t *testing.T) {
 	set := flag.NewFlagSet("test", 0)
+	set.String("service-id", "MyServiceId", "")
 	set.String("framework", "marathon", "some hint")
 	set.String("image", "nginx", "some hint")
 	set.String("tag", "latest", "some hint")
@@ -229,6 +244,7 @@ func TestMinimumHealthCapacityFlag(t *testing.T) {
 
 func TestMaximumOverCapacityFlag(t *testing.T) {
 	set := flag.NewFlagSet("test", 0)
+	set.String("service-id", "MyServiceId", "")
 	set.String("framework", "marathon", "some hint")
 	set.String("image", "nginx", "some hint")
 	set.String("tag", "latest", "some hint")
@@ -240,6 +256,7 @@ func TestMaximumOverCapacityFlag(t *testing.T) {
 
 func TestMinimumHealthCapacityFlagOutRange(t *testing.T) {
 	set := flag.NewFlagSet("test", 0)
+	set.String("service-id", "MyServiceId", "")
 	set.String("framework", "marathon", "some hint")
 	set.String("image", "nginx", "some hint")
 	set.String("tag", "latest", "some hint")
@@ -251,6 +268,7 @@ func TestMinimumHealthCapacityFlagOutRange(t *testing.T) {
 
 func TestMaximumOverCapacityFlagOutRange(t *testing.T) {
 	set := flag.NewFlagSet("test", 0)
+	set.String("service-id", "MyServiceId", "")
 	set.String("framework", "marathon", "some hint")
 	set.String("image", "nginx", "some hint")
 	set.String("tag", "latest", "some hint")
