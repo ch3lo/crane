@@ -8,7 +8,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"reflect"
+	"testing"
 )
+
+func TestCli(t *testing.T) {
+	suite.Run(t, new(CliSuite))
+}
 
 type CliSuite struct {
 	suite.Suite
@@ -91,4 +96,13 @@ func (suite *CliSuite) TestDisabledFramework() {
 	v := reflect.ValueOf(stackManager).Elem()
 	stacks := v.FieldByName("stacks")
 	assert.Equal(suite.T(), 1, stacks.Len(), "Cli should instantiate one stack")
+}
+
+func TestReadConfiguration(t *testing.T) {
+	res, _ := readConfiguration("../test/resources/crane.yml")
+	assert.NotNil(t, res.Clusters["sjc"], "Cluster sjc should be set")
+	_, err := readConfiguration("../test/resources/crane-not-there.yml")
+	assert.NotNil(t, err, "Should throw error")
+	_, err = readConfiguration("../test/resources/broken.yml")
+	assert.NotNil(t, err, "Should throw error")
 }

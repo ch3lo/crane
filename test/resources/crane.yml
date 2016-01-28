@@ -1,0 +1,6 @@
+cluster:
+  sjc:
+    framework:
+      marathon:
+        address: 3.3.3.3:8081
+        deploy-timeout: 30

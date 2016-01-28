@@ -122,15 +122,14 @@ func deployBefore(c *cli.Context) error {
 			return errors.New(fmt.Sprintf("El archivo %s con variables de entorno no existe", file))
 		}
 	}
-	
+
 	if c.Float64("minimumHealthCapacity") < 0.0 || c.Float64("minimumHealthCapacity") > 1.0 {
 		return errors.New("MinimumHealthCapacity flag value should be between 0.0 and 1.0")
 	}
-	
+
 	if c.Float64("maximumOverCapacity") < 0.0 || c.Float64("maximumOverCapacity") > 1.0 {
 		return errors.New("MaximumOverCapacity flag value should be between 0.0 and 1.0")
 	}
-
 
 	return nil
 }
@@ -192,7 +191,7 @@ func deployCmd(c *cli.Context) {
 		ImageName: c.String("image"),
 		Tag:       c.String("tag"),
 		MinimumHealthCapacity: c.Float64("minimumHealthCapacity"),
-		MaximumOverCapacity: c.Float64("maximumOverCapacity"),
+		MaximumOverCapacity:   c.Float64("maximumOverCapacity"),
 	}
 	serviceConfig.ConvertImageTagToServiceId()
 	applyPorts(c.StringSlice("port"), &serviceConfig)
