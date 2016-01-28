@@ -204,3 +204,14 @@ func TestCpuFlagSwarmWrongRange(t *testing.T) {
 	err := deployBefore(ctx)
 	assert.NotNil(t, err, "Should fail")
 }
+
+func createEndpointSliceFlag() cli.StringSliceFlag {
+	epSlice := new(cli.StringSlice)
+	epSlice.Set("http://localhost:8081")
+
+	endpointFlag := cli.StringSliceFlag{
+		Name:  "endpoint, ep",
+		Value: epSlice,
+	}
+	return endpointFlag
+}
