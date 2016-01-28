@@ -165,7 +165,11 @@ func RunApp() {
 	app.Flags = globalFlags()
 
 	app.Before = func(c *cli.Context) error {
-		return setupApplication(c, readConfiguration)
+		err := setupApplication(c, readConfiguration)
+		if err != nil {
+			util.Log.Fatalln(err)
+		}
+		return nil
 	}
 
 	app.Commands = commands

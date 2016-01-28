@@ -90,17 +90,16 @@ func TestDeployMethod(t *testing.T) {
 	sm.stackNotification = make(chan StackStatus, 100)
 
 	svc := framework.ServiceConfig{}
-	//ch := make(chan int)
 
 	stackMock := new(StackMock)
 	stackMock.mockId = 1
 	stackMock.On("Rollback").Return().On("DeployCheckAndNotify", svc, 2, 0.0, mock.AnythingOfType("chan int")).WaitUntil(time.After(500 * time.Millisecond)).Return()
-	key := ""
+	key := "key1"
 	sm.stacks[key] = stackMock
 	stackMock = new(StackMock)
 	stackMock.mockId = 2
 	stackMock.On("Rollback").Return().On("DeployCheckAndNotify", svc, 2, 0.0, mock.AnythingOfType("chan int")).WaitUntil(time.After(500 * time.Millisecond)).Return()
-	key = ""
+	key = "key2"
 	sm.stacks[key] = stackMock
 	sm.Deploy(svc, 2, 0.0)
 	stackMock.AssertExpectations(t)
@@ -112,7 +111,7 @@ func TestDeleteService(t *testing.T) {
 	sm.stacks = make(map[string]StackInterface)
 	sm.stackNotification = make(chan StackStatus, 100)
 	stackMock := new(StackMock)
-	key := ""
+	key := "key1"
 	serviceId := "serviceId"
 	sm.stacks[key] = stackMock
 	stackMock.On("DeleteService", serviceId).Return(nil)
@@ -125,7 +124,7 @@ func TestFindServiceInformation(t *testing.T) {
 	sm.stacks = make(map[string]StackInterface)
 	sm.stackNotification = make(chan StackStatus, 100)
 	stackMock := new(StackMock)
-	key := ""
+	key := "key1"
 	sm.stacks[key] = stackMock
 	search := "search"
 	stackMock.On("FindServiceInformation", search).Return(mock.AnythingOfType("[]*framework.ServiceInformation"))
@@ -138,7 +137,7 @@ func TestRollback(t *testing.T) {
 	sm.stacks = make(map[string]StackInterface)
 	sm.stackNotification = make(chan StackStatus, 100)
 	stackMock := new(StackMock)
-	key := ""
+	key := "dal"
 	sm.stacks[key] = stackMock
 	stackMock.On("Rollback").Return()
 	sm.Rollback()
@@ -150,7 +149,7 @@ func TestDeployedContainers(t *testing.T) {
 	sm.stacks = make(map[string]StackInterface)
 	sm.stackNotification = make(chan StackStatus, 100)
 	stackMock := new(StackMock)
-	key := ""
+	key := "wdc"
 	sm.stacks[key] = stackMock
 	stackMock.On("getServices").Return(mock.AnythingOfType("[]*framework.ServiceInformation"))
 	sm.DeployedContainers()
