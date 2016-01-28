@@ -4,3 +4,5 @@ cluster:
       marathon:
         address: 3.3.3.3:8081
         deploy-timeout: 30
+        basic-auth-user: chuck
+        basic-auth-pwd: norris
