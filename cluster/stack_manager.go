@@ -1,12 +1,13 @@
 package cluster
 
 import (
+	"errors"
+	"github.com/latam-airlines/crane/configuration"
 	"github.com/latam-airlines/crane/util"
 	"github.com/latam-airlines/mesos-framework-factory"
 )
 
 type CraneManager interface {
-	AppendStack(fh framework.Framework)
 	Deploy(serviceConfig framework.ServiceConfig, instances int, tolerance float64) bool
 	FindServiceInformation(string) []*framework.ServiceInformation
 	DeployedContainers() []*framework.ServiceInformation
@@ -19,37 +20,41 @@ type StackManager struct {
 	stackNotification chan StackStatus
 }
 
-func NewStackManager() CraneManager {
+func NewStackManager(config *configuration.Configuration) (CraneManager, error) {
 	sm := new(StackManager)
 	sm.stacks = make(map[string]StackInterface)
 	sm.stackNotification = make(chan StackStatus, 100)
 
-	return sm
+	err := sm.setupStacks(config.Clusters)
+	if err != nil {
+		return nil, err
+	}
+
+	return sm, nil
 }
 
-func (sm *StackManager) createId() string {
-	i := 0
-	for {
-		key := util.Letter(i)
-		exist := false
-
-		for k := range sm.stacks {
-			if k == key {
-				exist = true
+// setupClusters initializes the cluster, mapping the id of the cluster as its key
+func (sm *StackManager) setupStacks(config map[string]configuration.Cluster) error {
+	for key := range config {
+		s, err := NewStack(key, sm.stackNotification, config[key])
+		if err != nil {
+			switch err.(type) {
+			case *ClusterDisabled:
+				util.Log.Warnln(err.Error())
+				continue
+			default:
+				return err
 			}
 		}
 
-		if !exist {
-			return key
-		}
-		i++
+		sm.stacks[key] = s
+		util.Log.Infof("Cluster %s was configured", key)
 	}
-}
 
-func (sm *StackManager) AppendStack(fh framework.Framework) {
-	key := sm.createId()
-	util.Log.Infof("API configurada y mapeada a la llave %s", key)
-	sm.stacks[key] = NewStack(key, sm.stackNotification, fh)
+	if len(sm.stacks) == 0 {
+		return errors.New("Should exist at least one cluster")
+	}
+	return nil
 }
 
 func (sm *StackManager) Deploy(serviceConfig framework.ServiceConfig, instances int, tolerance float64) bool {
@@ -91,7 +96,7 @@ func (sm *StackManager) FindServiceInformation(search string) []*framework.Servi
 }
 
 func (sm *StackManager) DeployedContainers() []*framework.ServiceInformation {
-	allServices := make([]*framework.ServiceInformation, 0)
+	var allServices []*framework.ServiceInformation
 	for stack := range sm.stacks {
 		services := sm.stacks[stack].getServices()
 		if services != nil || len(services) != 0 {
@@ -99,7 +104,6 @@ func (sm *StackManager) DeployedContainers() []*framework.ServiceInformation {
 		}
 	}
 	return allServices
-
 }
 
 func (sm *StackManager) Rollback() {
