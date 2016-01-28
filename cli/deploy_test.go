@@ -215,3 +215,47 @@ func createEndpointSliceFlag() cli.StringSliceFlag {
 	}
 	return endpointFlag
 }
+
+func TestMinimumHealthCapacityFlag(t *testing.T) {
+	set := flag.NewFlagSet("test", 0)
+	set.String("framework", "marathon", "some hint")
+	set.String("image", "nginx", "some hint")
+	set.String("tag", "latest", "some hint")
+	set.Float64("minimumHealthCapacity", 1.0, "usage")
+	ctx := cli.NewContext(nil, set, nil)
+	err := deployBefore(ctx)
+	assert.Nil(t, err, "Should be fine")
+}
+
+func TestMaximumOverCapacityFlag(t *testing.T) {
+	set := flag.NewFlagSet("test", 0)
+	set.String("framework", "marathon", "some hint")
+	set.String("image", "nginx", "some hint")
+	set.String("tag", "latest", "some hint")
+	set.Float64("maximumOverCapacity", 0.2, "usage")
+	ctx := cli.NewContext(nil, set, nil)
+	err := deployBefore(ctx)
+	assert.Nil(t, err, "Should be fine")
+}
+
+func TestMinimumHealthCapacityFlagOutRange(t *testing.T) {
+	set := flag.NewFlagSet("test", 0)
+	set.String("framework", "marathon", "some hint")
+	set.String("image", "nginx", "some hint")
+	set.String("tag", "latest", "some hint")
+	set.Float64("minimumHealthCapacity", 1.1, "usage")
+	ctx := cli.NewContext(nil, set, nil)
+	err := deployBefore(ctx)
+	assert.NotNil(t, err, "Should fail")
+}
+
+func TestMaximumOverCapacityFlagOutRange(t *testing.T) {
+	set := flag.NewFlagSet("test", 0)
+	set.String("framework", "marathon", "some hint")
+	set.String("image", "nginx", "some hint")
+	set.String("tag", "latest", "some hint")
+	set.Float64("maximumOverCapacity", -0.2, "usage")
+	ctx := cli.NewContext(nil, set, nil)
+	err := deployBefore(ctx)
+	assert.NotNil(t, err, "Should fail")
+}
