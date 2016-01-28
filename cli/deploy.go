@@ -191,6 +191,8 @@ func deployCmd(c *cli.Context) {
 		Envs:      envs,
 		ImageName: c.String("image"),
 		Tag:       c.String("tag"),
+		MinimumHealthCapacity: c.Float64("minimumHealthCapacity"),
+		MaximumOverCapacity: c.Float64("maximumOverCapacity"),
 	}
 	serviceConfig.ConvertImageTagToServiceId()
 	applyPorts(c.StringSlice("port"), &serviceConfig)
