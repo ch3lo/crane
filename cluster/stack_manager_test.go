@@ -1,6 +1,8 @@
 package cluster
 
 import (
+	"errors"
+	"fmt"
 	"reflect"
 	"testing"
 	"time"
@@ -32,13 +34,13 @@ func (s *StackMock) undeployInstance(instance string) {
 	s.Called()
 }
 
-func (s *StackMock) DeployCheckAndNotify(serviceConfig framework.ServiceConfig, instances int, tolerance float64, ch chan int) {
+func (s *StackMock) DeployCheckAndNotify(serviceConfig framework.ServiceConfig, instances int, tolerance float64, ch chan StackStatus) {
 	s.Called(serviceConfig, instances, tolerance, ch)
 
 	if s.mockId == 1 {
-		ch <- 0 // ok
+		ch <- STACK_READY
 	} else {
-		ch <- 1 // fails
+		ch <- STACK_FAILED
 	}
 	return
 }
@@ -54,9 +56,19 @@ func (s *StackMock) FindServiceInformation(search string) ([]*framework.ServiceI
 	return services, nil
 }
 
-func (s *StackMock) DeleteService(serviceId string) error {
+func (s *StackMock) DeleteService(serviceId string) chan error {
 	s.Called(serviceId)
-	return nil
+
+	ch := make(chan error)
+
+	go func() {
+		if s.mockId == 1 {
+			ch <- nil
+		} else {
+			ch <- errors.New(fmt.Sprintf("Fail to DeleteService %s", serviceId))
+		}
+	}()
+	return ch
 }
 
 func (s *StackMock) Rollback() {
@@ -110,13 +122,22 @@ func TestDeleteService(t *testing.T) {
 	sm := new(StackManager)
 	sm.stacks = make(map[string]StackInterface)
 	sm.stackNotification = make(chan StackStatus, 100)
-	stackMock := new(StackMock)
-	key := "key1"
 	serviceId := "serviceId"
+	stackMock := new(StackMock)
+	stackMock.mockId = 1
+	key := "key1"
 	sm.stacks[key] = stackMock
-	stackMock.On("DeleteService", serviceId).Return(nil)
-	sm.DeleteService(serviceId)
+	stackMock.On("Rollback").Return().On("DeleteService", serviceId).Return(mock.AnythingOfType("chan error"))
+
+	stackMock = new(StackMock)
+	stackMock.mockId = 2
+	key = "key2"
+	sm.stacks[key] = stackMock
+	stackMock.On("Rollback").Return().On("DeleteService", serviceId).Return(mock.AnythingOfType("chan error"))
+
+	err := sm.DeleteService(serviceId)
 	stackMock.AssertExpectations(t)
+	assert.NotNil(t, err, "err should be different from nil")
 }
 
 func TestFindServiceInformation(t *testing.T) {
