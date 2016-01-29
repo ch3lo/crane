@@ -29,9 +29,9 @@ func (s StackStatus) String() string {
 type StackInterface interface {
 	getServices() []*framework.ServiceInformation
 	undeployInstance(instance string)
-	DeployCheckAndNotify(serviceConfig framework.ServiceConfig, instances int, tolerance float64, ch chan int)
+	DeployCheckAndNotify(serviceConfig framework.ServiceConfig, instances int, tolerance float64, ch chan StackStatus)
 	FindServiceInformation(search string) ([]*framework.ServiceInformation, error)
-	DeleteService(serviceId string) error
+	DeleteService(serviceId string) chan error
 	Rollback()
 }
 
@@ -70,13 +70,13 @@ func (s *Stack) getServices() []*framework.ServiceInformation {
 	return s.services
 }
 
-func (s *Stack) DeployCheckAndNotify(serviceConfig framework.ServiceConfig, instances int, tolerance float64, ch chan int) {
+func (s *Stack) DeployCheckAndNotify(serviceConfig framework.ServiceConfig, instances int, tolerance float64, ch chan StackStatus) {
 	service, err := s.frameworkApiHelper.DeployService(serviceConfig, instances)
 	if err != nil {
-		ch <- 1 // error
+		ch <- STACK_FAILED
 		fmt.Println(err)
 	} else {
-		ch <- 0 // success
+		ch <- STACK_READY
 	}
 	services := make([]*framework.ServiceInformation, 0)
 	services = append(services, service)
@@ -104,6 +104,11 @@ func (s *Stack) FindServiceInformation(search string) ([]*framework.ServiceInfor
 	return s.services, nil
 }
 
-func (s *Stack) DeleteService(serviceId string) error {
-	return s.frameworkApiHelper.DeleteService(serviceId)
+func (s *Stack) DeleteService(serviceId string) chan error {
+	ch := make(chan error)
+	go func() {
+		err := s.frameworkApiHelper.DeleteService(serviceId)
+		ch <- err
+	}()
+	return ch
 }
