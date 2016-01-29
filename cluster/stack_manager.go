@@ -60,17 +60,17 @@ func (sm *StackManager) setupStacks(config map[string]configuration.Cluster) err
 func (sm *StackManager) Deploy(serviceConfig framework.ServiceConfig, instances int, tolerance float64) bool {
 	util.Log.Infof("enter deploy stack manager - stacks: %d", len(sm.stacks))
 
-	chanMap := make(map[string]chan int)
+	chanMap := make(map[string]chan StackStatus)
 
 	for stackKey := range sm.stacks {
-		ch := make(chan int) // 0 == Ok, 1 == Error
+		ch := make(chan StackStatus)
 		chanMap[stackKey] = ch
 		go sm.stacks[stackKey].DeployCheckAndNotify(serviceConfig, instances, tolerance, ch)
 	}
 
 	//Checking for results on each go routine
 	for stackKey, ch := range chanMap {
-		if <-ch == 0 {
+		if status := <-ch; status == STACK_READY {
 			util.Log.Infof("Deploy Process OK on stack %s", stackKey)
 		} else {
 			util.Log.Errorf("Deploy Process Fails ok stack %s", stackKey)
@@ -115,8 +115,24 @@ func (sm *StackManager) Rollback() {
 
 func (sm *StackManager) DeleteService(serviceId string) error {
 	util.Log.Infoln("Starting DeleteService")
-	for stack := range sm.stacks {
-		sm.stacks[stack].DeleteService(serviceId)
+
+	chanMap := make(map[string]chan error)
+
+	for stackKey := range sm.stacks {
+		ch := sm.stacks[stackKey].DeleteService(serviceId)
+		chanMap[stackKey] = ch
 	}
+
+	//Checking for results on each go routine
+	for stackKey, ch := range chanMap {
+		if err := <-ch; err == nil {
+			util.Log.Infof("Delete Process OK on stack %s", stackKey)
+		} else {
+			util.Log.Errorf("Delete Process Fails ok stack %s", stackKey)
+			sm.Rollback()
+			return err
+		}
+	}
+
 	return nil
 }
