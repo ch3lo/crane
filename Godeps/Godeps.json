@@ -1,9 +1,6 @@
 {
 	"ImportPath": "github.com/latam-airlines/crane",
-	"GoVersion": "go1.5.1",
-	"Packages": [
-		"./..."
-	],
+	"GoVersion": "go1.4",
 	"Deps": [
 		{
 			"ImportPath": "github.com/Sirupsen/logrus",
@@ -14,10 +11,6 @@
 			"ImportPath": "github.com/codegangsta/cli",
 			"Comment": "1.2.0-193-gf9cc300",
 			"Rev": "f9cc3001e04f9783cb4ad08ca6791aa07134787c"
-		},
-		{
-			"ImportPath": "github.com/davecgh/go-spew/spew",
-			"Rev": "5215b55f46b2b919f50a1df0eaa5886afe4e3b3d"
 		},
 		{
 			"ImportPath": "github.com/donovanhide/eventsource",
@@ -32,6 +25,7 @@
 			"Rev": "2a60fc2ba6c19de80291203597d752e9ba58e4c0"
 		},
 		{
+<<<<<<< HEAD
 			"ImportPath": "github.com/pmezard/go-difflib/difflib",
 			"Rev": "792786c7400a136282c1664665ae0a8db921c6c2"
 		},

@@ -92,7 +92,7 @@ func (s *Stack) undeployInstance(instance string) {
 }
 
 func (s *Stack) Rollback() {
-	s.log.Infof("Comenzando Rollback en el Stack")
+	log.Infof("Comenzando Rollback en el Stack")
 }
 
 func (s *Stack) FindServiceInformation(search string) ([]*framework.ServiceInformation, error) {

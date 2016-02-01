@@ -86,7 +86,7 @@ func deployFlags() []cli.Flag {
 		cli.Float64Flag{
 			Name:  "minimumHealthCapacity",
 			Value: 1.0,
-			Usage: "Number between 0and 1 that is multiplied with the instance count. This is the minimum number of healthy nodes that do not sacrifice overall application purpose, ie --minimumHealthCapacity=0.8",
+			Usage: "Number between 0 and 1 that is multiplied with the instance count. This is the minimum number of healthy nodes that do not sacrifice overall application purpose, ie --minimumHealthCapacity=0.8",
 		},
 		cli.Float64Flag{
 			Name:  "maximumOverCapacity",
@@ -220,7 +220,7 @@ func deployCmd(c *cli.Context) {
 		for _, service := range services {
 			for _, instance := range service.Instances {
 				for _, val := range instance.Ports {
-					util.Log.Infof("Se desplegó %s en host %s y dirección %s", instance.ID, instance.Host, val)
+					util.Log.Infof("Se desplegó %s en host %s y dirección %+v", instance.ID, instance.Host, val)
 					instanceInfo := callbackResume{
 						Id:      instance.ID,
 						Address: instance.Host + ":" + strconv.FormatInt(val.Internal, 10),
