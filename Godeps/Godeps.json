@@ -32,10 +32,6 @@
 			"Rev": "2a60fc2ba6c19de80291203597d752e9ba58e4c0"
 		},
 		{
-			"ImportPath": "github.com/latam-airlines/mesos-framework-factory",
-			"Rev": "36a923d907fe422c55e133100b71928d22742a89"
-		},
-		{
 			"ImportPath": "github.com/pmezard/go-difflib/difflib",
 			"Rev": "792786c7400a136282c1664665ae0a8db921c6c2"
 		},
@@ -61,6 +57,14 @@
                 {
                         "ImportPath": "github.com/stretchr/objx",
                         "Rev": "1a9d0bb9f541897e62256577b352fdbc1fb4fd94"
+                },
+                {
+                        "ImportPath": "github.com/latam-airlines/mesos-framework-factory",
+                        "Rev": "20e8d30a9af04caac2586b3c1a33598e59a672b8"
+                },
+                {
+                        "ImportPath": "golang.org/x/sys/unix",
+                        "Rev": "eb2c74142fd19a79b3f237334c7384d5167b1b46"
                 }
 	]
 }
