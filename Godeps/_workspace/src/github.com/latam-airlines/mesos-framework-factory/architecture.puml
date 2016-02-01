@@ -1,0 +1,58 @@
+@startuml
+
+enum InstanceStatus {
+    Up
+    Down
+}
+
+class Instance {
+    ID : string
+    Host : string
+    ContainerName : string
+    Status : InstanceStatus
+    Ports : map[string]InstancePort
+}
+
+class Group {
+    ID : string
+    Children : interface{} 
+}
+
+class ServiceInformation {
+    ID : string
+    ImageName : string
+    ImageTag : string
+    Instances : []Instance
+}
+
+class InstancePort {
+    Advertise : string
+    Internal : int64
+    Publics : []int64
+    Type : InstancePortType
+}
+
+Instance --> InstancePort
+Instance --> InstanceStatus
+ServiceInformation *- Instance
+Framework -> ServiceInformation
+Framework -> ServiceConfig
+
+class ServiceConfig {
+    ServiceID : string
+    CPUShares : int
+    Envs : []string
+    ImageName : string
+    Memory : int64
+    Publish : []string
+    Tag : string
+}
+
+interface Framework  {
+    ID() string
+    FindServiceInformation(criteria) ([]*ServiceInformation, error)
+	UndeployInstance(instanceID string) (error)
+	DeployService(config model.ServiceConfig, instances int) (*ServiceInformation, error)
+}
+
+@enduml

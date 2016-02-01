@@ -1,9 +1,6 @@
 {
 	"ImportPath": "github.com/latam-airlines/crane",
-	"GoVersion": "go1.5.1",
-	"Packages": [
-		"./..."
-	],
+	"GoVersion": "go1.4",
 	"Deps": [
 		{
 			"ImportPath": "github.com/Sirupsen/logrus",
@@ -14,10 +11,6 @@
 			"ImportPath": "github.com/codegangsta/cli",
 			"Comment": "1.2.0-193-gf9cc300",
 			"Rev": "f9cc3001e04f9783cb4ad08ca6791aa07134787c"
-		},
-		{
-			"ImportPath": "github.com/davecgh/go-spew/spew",
-			"Rev": "5215b55f46b2b919f50a1df0eaa5886afe4e3b3d"
 		},
 		{
 			"ImportPath": "github.com/donovanhide/eventsource",
@@ -33,34 +26,15 @@
 		},
 		{
 			"ImportPath": "github.com/latam-airlines/mesos-framework-factory",
-			"Rev": "36a923d907fe422c55e133100b71928d22742a89"
+			"Rev": "36f11b9236936d251b94698252999794313f93c8"
 		},
 		{
-			"ImportPath": "github.com/pmezard/go-difflib/difflib",
-			"Rev": "792786c7400a136282c1664665ae0a8db921c6c2"
-		},
-		{
-			"ImportPath": "github.com/stretchr/testify/assert",
-			"Comment": "v1.1.3",
-			"Rev": "f390dcf405f7b83c997eac1b06768bb9f44dec18"
-		},
-		{
-			"ImportPath": "github.com/stretchr/testify/require",
-			"Comment": "v1.1.3",
-			"Rev": "f390dcf405f7b83c997eac1b06768bb9f44dec18"
-		},
-		{
-			"ImportPath": "github.com/stretchr/testify/suite",
-			"Comment": "v1.1.3",
-			"Rev": "f390dcf405f7b83c997eac1b06768bb9f44dec18"
+			"ImportPath": "golang.org/x/sys/unix",
+			"Rev": "eb2c74142fd19a79b3f237334c7384d5167b1b46"
 		},
 		{
 			"ImportPath": "gopkg.in/yaml.v2",
 			"Rev": "f7716cbe52baa25d2e9b0d0da546fcf909fc16b4"
-		},
-                {
-                        "ImportPath": "github.com/stretchr/objx",
-                        "Rev": "1a9d0bb9f541897e62256577b352fdbc1fb4fd94"
-                }
+		}
 	]
 }
