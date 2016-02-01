@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"github.com/latam-airlines/crane/Godeps/_workspace/src/github.com/latam-airlines/mesos-framework-factory"
+	"github.com/latam-airlines/mesos-framework-factory"
 )
 
 type Syslog struct {

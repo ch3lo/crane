@@ -25,7 +25,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/latam-airlines/crane/Godeps/_workspace/src/github.com/donovanhide/eventsource"
+	"github.com/donovanhide/eventsource"
 )
 
 // Subscriptions is a collection to urls that marathon is implementing a callback on

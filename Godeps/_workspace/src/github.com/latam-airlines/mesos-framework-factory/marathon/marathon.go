@@ -4,16 +4,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/latam-airlines/crane/Godeps/_workspace/src/github.com/gambol99/go-marathon"
-	"github.com/latam-airlines/crane/Godeps/_workspace/src/github.com/latam-airlines/mesos-framework-factory"
-	"github.com/latam-airlines/crane/Godeps/_workspace/src/github.com/latam-airlines/mesos-framework-factory/factory"
-	"github.com/latam-airlines/crane/Godeps/_workspace/src/github.com/latam-airlines/mesos-framework-factory/logger"
+	"github.com/gambol99/go-marathon"
+	"github.com/latam-airlines/mesos-framework-factory"
+	"github.com/latam-airlines/mesos-framework-factory/factory"
+	"github.com/latam-airlines/mesos-framework-factory/logger"
+	"github.com/latam-airlines/mesos-framework-factory/utils"
 	"strings"
 	"time"
 )
 
 const frameworkID = "marathon"
-const urlVersion = "v2"
 
 func init() {
 	factory.Register(frameworkID, &marathonCreator{})
@@ -33,8 +33,8 @@ func (factory *marathonCreator) Create(params map[string]interface{}) (framework
 	if !ok {
 		return nil, errors.New("Parameter deploy-timeout does not exist")
 	}
-	authUser := extractString(params, "basic-auth-user")
-	authPwd := extractString(params, "basic-auth-pwd")
+	authUser := utils.ExtractString(params, "basic-auth-user")
+	authPwd := utils.ExtractString(params, "basic-auth-pwd")
 	if authUser != "" && authPwd == "" {
 		return nil, errors.New("Parameter basic-auth-pwd does not exist")
 	}
@@ -43,19 +43,10 @@ func (factory *marathonCreator) Create(params map[string]interface{}) (framework
 		DeployTimeout:         deployTimeout,
 		HTTPBasicAuthUser:     authUser,
 		HTTPBasicAuthPassword: authPwd,
-		DockerCfg:             extractString(params, "docker-cfg"),
+		DockerCfg:             utils.ExtractString(params, "docker-cfg"),
 	}
 
 	return NewMarathon(parameters)
-}
-
-func extractString(params map[string]interface{}, key string) string {
-	val := ""
-	valI, ok := params[key]
-	if ok {
-		val = fmt.Sprint(valI)
-	}
-	return val
 }
 
 type Marathon struct {
@@ -75,7 +66,7 @@ type Parameters struct {
 
 func NewMarathon(params *Parameters) (*Marathon, error) {
 	helper := new(Marathon)
-	endpointUrl := validateEndpoint(params.EndpointUrl)
+	endpointUrl := utils.ValidateEndpoint(params.EndpointUrl)
 
 	helper.endpointUrl = endpointUrl
 	helper.deployTimeout = params.DeployTimeout
@@ -94,14 +85,6 @@ func NewMarathon(params *Parameters) (*Marathon, error) {
 	helper.client = client
 	helper.dockerCfg = params.DockerCfg
 	return helper, nil
-}
-
-func validateEndpoint(endpoint string) string {
-	if strings.Contains(endpoint, urlVersion) {
-		return endpoint
-	} else {
-		return endpoint + "/" + urlVersion
-	}
 }
 
 func (helper *Marathon) SetClient(client marathon.Marathon) {

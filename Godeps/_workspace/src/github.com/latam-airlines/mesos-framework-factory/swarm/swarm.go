@@ -11,9 +11,9 @@ import (
 	"regexp"
 
 	"github.com/fsouza/go-dockerclient"
-	"github.com/latam-airlines/crane/Godeps/_workspace/src/github.com/latam-airlines/mesos-framework-factory"
-	"github.com/latam-airlines/crane/Godeps/_workspace/src/github.com/latam-airlines/mesos-framework-factory/factory"
-	"github.com/latam-airlines/crane/Godeps/_workspace/src/github.com/latam-airlines/mesos-framework-factory/logger"
+	"github.com/latam-airlines/mesos-framework-factory"
+	"github.com/latam-airlines/mesos-framework-factory/factory"
+	"github.com/latam-airlines/mesos-framework-factory/logger"
 )
 
 const frameworkID = "swarm"

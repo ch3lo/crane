@@ -3,8 +3,8 @@ package factory
 import (
 	"fmt"
 
-	"github.com/latam-airlines/crane/Godeps/_workspace/src/github.com/latam-airlines/mesos-framework-factory"
-	"github.com/latam-airlines/crane/Godeps/_workspace/src/github.com/latam-airlines/mesos-framework-factory/logger"
+	"github.com/latam-airlines/mesos-framework-factory"
+	"github.com/latam-airlines/mesos-framework-factory/logger"
 )
 
 // frameworkFactories almacena una mapeo entre un identificador de framework y su constructor

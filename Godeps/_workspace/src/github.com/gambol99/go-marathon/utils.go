@@ -26,7 +26,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/latam-airlines/crane/Godeps/_workspace/src/github.com/google/go-querystring/query"
+	"github.com/google/go-querystring/query"
 )
 
 type atomicSwitch int64

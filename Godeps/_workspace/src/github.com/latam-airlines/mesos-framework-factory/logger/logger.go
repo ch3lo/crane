@@ -1,6 +1,6 @@
 package logger
 
-import log "github.com/latam-airlines/crane/Godeps/_workspace/src/github.com/Sirupsen/logrus"
+import log "github.com/Sirupsen/logrus"
 
 var logger *log.Logger
 

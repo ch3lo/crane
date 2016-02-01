@@ -21,7 +21,7 @@ import (
 	"log"
 	"time"
 
-	marathon "github.com/latam-airlines/crane/Godeps/_workspace/src/github.com/gambol99/go-marathon"
+	marathon "github.com/gambol99/go-marathon"
 )
 
 var marathonURL string

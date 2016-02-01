@@ -1,9 +1,9 @@
 package marathon
 
 import (
-	"github.com/latam-airlines/crane/Godeps/_workspace/src/github.com/gambol99/go-marathon"
-	"github.com/latam-airlines/crane/Godeps/_workspace/src/github.com/latam-airlines/mesos-framework-factory"
-	"github.com/latam-airlines/crane/Godeps/_workspace/src/github.com/latam-airlines/mesos-framework-factory/utils"
+	"github.com/gambol99/go-marathon"
+	"github.com/latam-airlines/mesos-framework-factory"
+	"github.com/latam-airlines/mesos-framework-factory/utils"
 	"strconv"
 	"strings"
 )
