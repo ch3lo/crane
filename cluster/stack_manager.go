@@ -71,7 +71,7 @@ func (sm *StackManager) Deploy(serviceConfig framework.ServiceConfig, instances 
 	//Checking for results on each go routine
 	for stackKey, ch := range chanMap {
 		if status := <-ch; status == STACK_READY {
-			util.Log.Infof("Deploy Process OK on stack %s", stackKey)
+			util.Log.Infof("Deploy Process OK on stack %s, status %d", stackKey, status)
 		} else {
 			util.Log.Errorf("Deploy Process Fails on stack %s", stackKey)
 			sm.Rollback()
