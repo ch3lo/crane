@@ -93,6 +93,10 @@ func deployFlags() []cli.Flag {
 			Value: 0.2,
 			Usage: "Number between 0 and 1 which is multiplied with the instance count. This is the maximum number of additional instances launched at any point of time during the upgrade process, i.e. maximumOverCapacity=0.2",
 		},
+		cli.StringFlag{
+			Name:  "health-check-path",
+			Usage: "path to the health check file. ex: /v0/healthy",
+		},
 	}
 }
 
@@ -201,6 +205,7 @@ func deployCmd(c *cli.Context) {
 		Tag:       c.String("tag"),
 		MinimumHealthCapacity: c.Float64("minimumHealthCapacity"),
 		MaximumOverCapacity:   c.Float64("maximumOverCapacity"),
+		HealthCheckConfig:     &framework.HealthCheck{Path: c.String("health-check-path")},
 	}
 	applyPorts(c.StringSlice("port"), &serviceConfig)
 	if c.String("memory") != "" {

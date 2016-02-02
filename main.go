@@ -1,8 +1,8 @@
 package main
 
 import (
-	_ "github.com/latam-airlines/mesos-framework-factory/marathon"
 	"github.com/latam-airlines/crane/cli"
+	_ "github.com/latam-airlines/mesos-framework-factory/marathon"
 )
 
 func main() {
