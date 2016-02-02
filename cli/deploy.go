@@ -95,7 +95,7 @@ func deployFlags() []cli.Flag {
 		},
 		cli.StringFlag{
 			Name:  "health-check-path",
-			Usage: "path to the health check file. ex: /v0/healthy",
+			Usage: "path to the health check file. ex: --health-check-path=/v0/healthy",
 		},
 	}
 }
