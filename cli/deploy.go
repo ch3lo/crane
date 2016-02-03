@@ -235,9 +235,8 @@ func deployCmd(c *cli.Context) {
 			}
 		}
 		jsonResume, _ := json.Marshal(resume)
-
 		fmt.Println(string(jsonResume))
 	} else {
-		util.Log.Fatalln("Proceso de deploy con errores")
+		util.Log.Fatalln("Deployment-Process terminated with errors")
 	}
 }
