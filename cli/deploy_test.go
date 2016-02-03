@@ -277,3 +277,15 @@ func TestMaximumOverCapacityFlagOutRange(t *testing.T) {
 	err := deployBefore(ctx)
 	assert.NotNil(t, err, "Should fail")
 }
+
+func TestHealthCheckFlag(t *testing.T) {
+	set := flag.NewFlagSet("test", 0)
+	set.String("service-id", "MyServiceId", "")
+	set.String("framework", "marathon", "some hint")
+	set.String("image", "nginx", "some hint")
+	set.String("tag", "latest", "some hint")
+	set.String("health-check-path", "/v0/healhty", "usage")
+	ctx := cli.NewContext(nil, set, nil)
+	err := deployBefore(ctx)
+	assert.Nil(t, err, "Should be fine")
+}
