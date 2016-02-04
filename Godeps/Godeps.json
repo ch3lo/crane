@@ -20,8 +20,8 @@
 			"Rev": "c3f57f280ec708df24886d9e62f2fd178d69d8e8"
 		},
 		{
-			"ImportPath": "github.com/gambol99/go-marathon",
-			"Rev": "b544da8caac5480c82185a935f1cf0469ebf9e8c"
+			"ImportPath": "github.com/latam-airlines/go-marathon",
+			"Rev": "4e8ade6770b9d47a04f81ba5aff536ecd269d652"
 		},
 		{
 			"ImportPath": "github.com/google/go-querystring/query",
