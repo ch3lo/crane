@@ -172,22 +172,6 @@ func applyPorts(ports []string, cfg *framework.ServiceConfig) error {
 	return nil
 }
 
-func applyConstraints(contextConstraints []string, cfg *framework.ServiceConfig) error {
-	constraints := make(map[string]string)
-	for _, constraint := range contextConstraints {
-		if !strings.Contains(constraint, "=") {
-			return errors.New("Constraint does not comply format key=value")
-		}
-		splits := strings.Split(constraint, "=")
-		constraints[splits[0]] = splits[1]
-	}
-
-	if len(constraints) != 0 {
-		cfg.Constraints = constraints
-	}
-	return nil
-}
-
 func applyKeyValSliceFlag(sliceFlag []string, setAction func(newMap map[string]string)) error {
 	configMap := make(map[string]string)
 
@@ -201,27 +185,6 @@ func applyKeyValSliceFlag(sliceFlag []string, setAction func(newMap map[string]s
 
 	if setAction != nil {
 		setAction(configMap)
-	}
-	return nil
-}
-
-func applyLabels(labels []string, beta string, cfg *framework.ServiceConfig) error {
-	configLabels := make(map[string]string)
-
-	for _, label := range labels {
-		if !strings.Contains(label, "=") {
-			return errors.New("Label does not comply format key=value")
-		}
-		splits := strings.Split(label, "=")
-		configLabels[splits[0]] = splits[1]
-	}
-
-	if beta != "" {
-		configLabels["slave_name"] = beta
-	}
-
-	if len(configLabels) != 0 {
-		cfg.Labels = configLabels
 	}
 	return nil
 }
@@ -277,7 +240,12 @@ func deployCmd(c *cli.Context) {
 		if serviceConfig.Labels == nil {
 			serviceConfig.Labels = make(map[string]string)
 		}
+		if serviceConfig.Constraints == nil {
+			serviceConfig.Constraints = make(map[string]string)
+		}
+		
 		serviceConfig.Labels["slave_name"] = c.String("beta")
+		serviceConfig.Constraints["slave_name"] = c.String("beta")
 	}
 
 	handleDeploySigTerm(stackManager)
