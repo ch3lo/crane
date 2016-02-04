@@ -74,7 +74,7 @@ func (s *Stack) DeployCheckAndNotify(serviceConfig framework.ServiceConfig, inst
 	service, err := s.frameworkApiHelper.DeployService(serviceConfig, instances)
 	if err != nil {
 		ch <- STACK_FAILED
-		fmt.Println(err)
+		util.Log.Errorln(err)
 	} else {
 		ch <- STACK_READY
 	}
