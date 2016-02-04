@@ -8,6 +8,14 @@ import (
 	"testing"
 )
 
+func createFlagSetWithMandatoryFlags() *flag.FlagSet {
+	set := flag.NewFlagSet("test", 0)
+	set.String("service-id", "MyServiceId", "")
+	set.String("image", "someImage", "")
+	set.String("tag", "someTag", "")
+	return set
+}
+
 func TestApplyPortsNil(t *testing.T) {
 	cfg := new(framework.ServiceConfig)
 	applyPorts(nil, cfg)
@@ -41,46 +49,6 @@ func TestApplyPortsWrongFormat(t *testing.T) {
 	assert.NotNil(t, err, "Should throw error")
 }
 
-func TestApplyConstraintsNil(t *testing.T) {
-	err := applyConstraints(nil, "", nil)
-	assert.Nil(t, err, "Should do nothing")
-}
-
-func TestApplyConstraintsBeta(t *testing.T) {
-	cfg := new(framework.ServiceConfig)
-	applyConstraints(nil, "beta4002", cfg)
-	assert.Equal(t, "beta4002", cfg.Constraints["slave_name"], "Should contain beta")
-}
-
-func TestApplyConstraints(t *testing.T) {
-	constraints := make([]string, 2)
-	constraints[0] = "key1=val1"
-	constraints[1] = "key2=val2"
-	cfg := new(framework.ServiceConfig)
-	applyConstraints(constraints, "beta4002", cfg)
-	assert.Equal(t, "beta4002", cfg.Constraints["slave_name"], "Should contain beta")
-	assert.Equal(t, "val1", cfg.Constraints["key1"], "Should contain key1")
-	assert.Equal(t, "val2", cfg.Constraints["key2"], "Should contain key2")
-}
-
-func TestApplyConstraintsOnly(t *testing.T) {
-	constraints := make([]string, 2)
-	constraints[0] = "key1=val1"
-	constraints[1] = "key2=val2"
-	cfg := new(framework.ServiceConfig)
-	applyConstraints(constraints, "", cfg)
-	assert.Equal(t, "val1", cfg.Constraints["key1"], "Should contain key1")
-	assert.Equal(t, "val2", cfg.Constraints["key2"], "Should contain key2")
-}
-
-func TestApplyConstraintsError(t *testing.T) {
-	constraints := make([]string, 1)
-	constraints[0] = "key2;val2"
-	cfg := new(framework.ServiceConfig)
-	err := applyConstraints(constraints, "", cfg)
-	assert.NotNil(t, err, "Should fail")
-}
-
 func TestDeployBeforeError(t *testing.T) {
 	set := flag.NewFlagSet("test", 0)
 	ctx := cli.NewContext(nil, set, nil)
@@ -103,10 +71,7 @@ func TestDeployBeforeError(t *testing.T) {
 	err = deployBefore(ctx)
 	assert.NotNil(t, err, "Should throw error memory empty")
 
-	set = flag.NewFlagSet("test", 0)
-	set.String("service-id", "MyServiceId", "")
-	set.String("image", "someImage", "")
-	set.String("tag", "someTag", "")
+	set = createFlagSetWithMandatoryFlags()
 	set.String("memory", "512", "")
 	envSlice := new(cli.StringSlice)
 	envSlice.Set("/tmp/bla.txt")
@@ -122,10 +87,7 @@ func TestDeployBeforeError(t *testing.T) {
 }
 
 func TestDeployBefore(t *testing.T) {
-	set := flag.NewFlagSet("test", 0)
-	set.String("service-id", "MyServiceId", "")
-	set.String("image", "someImage", "")
-	set.String("tag", "someTag", "")
+	set := createFlagSetWithMandatoryFlags()
 	set.String("memory", "512", "")
 	envSlice := new(cli.StringSlice)
 	envSlice.Set("deploy.go")
@@ -142,10 +104,7 @@ func TestDeployBefore(t *testing.T) {
 
 func TestDeployCmd(t *testing.T) {
 	stackManager = createStackManagerMock()
-	set := flag.NewFlagSet("test", 0)
-	set.String("service-id", "MyServiceId", "")
-	set.String("image", "someImage", "")
-	set.String("tag", "someTag", "")
+	set := createFlagSetWithMandatoryFlags()
 	set.String("memory", "512", "")
 	envFileSlice := new(cli.StringSlice)
 	envFileSlice.Set("deploy.go")
@@ -163,7 +122,6 @@ func TestDeployCmd(t *testing.T) {
 		Value: envSlice,
 	}
 	envFlag.Apply(set)
-	set.String("framework", "marathon", "")
 
 	endpointFlag := createEndpointSliceFlag()
 	endpointFlag.Apply(set)
@@ -173,11 +131,7 @@ func TestDeployCmd(t *testing.T) {
 }
 
 func TestCpuFlag(t *testing.T) {
-	set := flag.NewFlagSet("test", 0)
-	set.String("service-id", "MyServiceId", "")
-	set.String("framework", "marathon", "some hint")
-	set.String("image", "nginx", "some hint")
-	set.String("tag", "latest", "some hint")
+	set := createFlagSetWithMandatoryFlags()
 	set.Float64("cpu", 0.25, "usage")
 	ctx := cli.NewContext(nil, set, nil)
 	err := deployBefore(ctx)
@@ -185,10 +139,7 @@ func TestCpuFlag(t *testing.T) {
 }
 
 func TestCpuFlagNegative(t *testing.T) {
-	set := flag.NewFlagSet("test", 0)
-	set.String("service-id", "MyServiceId", "")
-	set.String("image", "nginx", "some hint")
-	set.String("tag", "latest", "some hint")
+	set := createFlagSetWithMandatoryFlags()
 	set.Float64("cpu", -2.1, "usage")
 	ctx := cli.NewContext(nil, set, nil)
 	err := deployBefore(ctx)
@@ -196,11 +147,8 @@ func TestCpuFlagNegative(t *testing.T) {
 }
 
 func TestCpuFlagMarathonWrongRange(t *testing.T) {
-	set := flag.NewFlagSet("test", 0)
-	set.String("service-id", "MyServiceId", "")
-	set.String("framework", "marathon", "some hint")
-	set.String("image", "nginx", "some hint")
-	set.String("tag", "latest", "some hint")
+	set := createFlagSetWithMandatoryFlags()
+	set.String("framework", "marathon", "usage") // Fix this: framework flag does not exist anymore
 	set.Float64("cpu", 1.1, "usage")
 	ctx := cli.NewContext(nil, set, nil)
 	err := deployBefore(ctx)
@@ -208,11 +156,8 @@ func TestCpuFlagMarathonWrongRange(t *testing.T) {
 }
 
 func TestCpuFlagSwarmWrongRange(t *testing.T) {
-	set := flag.NewFlagSet("test", 0)
-	set.String("service-id", "MyServiceId", "")
-	set.String("framework", "swarm", "some hint")
-	set.String("image", "nginx", "some hint")
-	set.String("tag", "latest", "some hint")
+	set := createFlagSetWithMandatoryFlags()
+	set.String("framework", "swarm", "usage") // Fix this: framework flag does not exist anymore
 	set.Float64("cpu", 1025, "usage")
 	ctx := cli.NewContext(nil, set, nil)
 	err := deployBefore(ctx)
@@ -231,11 +176,7 @@ func createEndpointSliceFlag() cli.StringSliceFlag {
 }
 
 func TestMinimumHealthCapacityFlag(t *testing.T) {
-	set := flag.NewFlagSet("test", 0)
-	set.String("service-id", "MyServiceId", "")
-	set.String("framework", "marathon", "some hint")
-	set.String("image", "nginx", "some hint")
-	set.String("tag", "latest", "some hint")
+	set := createFlagSetWithMandatoryFlags()
 	set.Float64("minimumHealthCapacity", 1.0, "usage")
 	ctx := cli.NewContext(nil, set, nil)
 	err := deployBefore(ctx)
@@ -243,11 +184,7 @@ func TestMinimumHealthCapacityFlag(t *testing.T) {
 }
 
 func TestMaximumOverCapacityFlag(t *testing.T) {
-	set := flag.NewFlagSet("test", 0)
-	set.String("service-id", "MyServiceId", "")
-	set.String("framework", "marathon", "some hint")
-	set.String("image", "nginx", "some hint")
-	set.String("tag", "latest", "some hint")
+	set := createFlagSetWithMandatoryFlags()
 	set.Float64("maximumOverCapacity", 0.2, "usage")
 	ctx := cli.NewContext(nil, set, nil)
 	err := deployBefore(ctx)
@@ -255,11 +192,7 @@ func TestMaximumOverCapacityFlag(t *testing.T) {
 }
 
 func TestMinimumHealthCapacityFlagOutRange(t *testing.T) {
-	set := flag.NewFlagSet("test", 0)
-	set.String("service-id", "MyServiceId", "")
-	set.String("framework", "marathon", "some hint")
-	set.String("image", "nginx", "some hint")
-	set.String("tag", "latest", "some hint")
+	set := createFlagSetWithMandatoryFlags()
 	set.Float64("minimumHealthCapacity", 1.1, "usage")
 	ctx := cli.NewContext(nil, set, nil)
 	err := deployBefore(ctx)
@@ -267,11 +200,7 @@ func TestMinimumHealthCapacityFlagOutRange(t *testing.T) {
 }
 
 func TestMaximumOverCapacityFlagOutRange(t *testing.T) {
-	set := flag.NewFlagSet("test", 0)
-	set.String("service-id", "MyServiceId", "")
-	set.String("framework", "marathon", "some hint")
-	set.String("image", "nginx", "some hint")
-	set.String("tag", "latest", "some hint")
+	set := createFlagSetWithMandatoryFlags()
 	set.Float64("maximumOverCapacity", -0.2, "usage")
 	ctx := cli.NewContext(nil, set, nil)
 	err := deployBefore(ctx)
@@ -279,13 +208,54 @@ func TestMaximumOverCapacityFlagOutRange(t *testing.T) {
 }
 
 func TestHealthCheckFlag(t *testing.T) {
-	set := flag.NewFlagSet("test", 0)
-	set.String("service-id", "MyServiceId", "")
-	set.String("framework", "marathon", "some hint")
-	set.String("image", "nginx", "some hint")
-	set.String("tag", "latest", "some hint")
+	set := createFlagSetWithMandatoryFlags()
 	set.String("health-check-path", "/v0/healhty", "usage")
 	ctx := cli.NewContext(nil, set, nil)
 	err := deployBefore(ctx)
 	assert.Nil(t, err, "Should be fine")
+}
+
+func TestApplyKeyValSliceFlagNil(t *testing.T) {
+	err := applyKeyValSliceFlag(nil, nil)
+	assert.Nil(t, err, "Should do nothing")
+}
+
+func TestApplyKeyValSliceFlagConstraints(t *testing.T) {
+	constraints := make([]string, 2)
+	constraints[0] = "key1=val1"
+	constraints[1] = "key2=val2"
+	cfg := new(framework.ServiceConfig)
+	applyKeyValSliceFlag(constraints, func(configMap map[string]string) {
+		if configMap != nil && len(configMap) != 0 {
+			cfg.Constraints = configMap
+		}
+	})
+	assert.Equal(t, "val1", cfg.Constraints["key1"], "Should contain key1")
+	assert.Equal(t, "val2", cfg.Constraints["key2"], "Should contain key2")
+}
+
+func TestApplyKeyValSliceFlagError(t *testing.T) {
+	constraints := make([]string, 1)
+	constraints[0] = "key2;val2"
+	cfg := new(framework.ServiceConfig)
+	err := applyKeyValSliceFlag(constraints, func(configMap map[string]string) {
+		if configMap != nil && len(configMap) != 0 {
+			cfg.Constraints = configMap
+		}
+	})
+	assert.NotNil(t, err, "Should fail")
+}
+
+func TestApplyKeyValSliceFlagLabels(t *testing.T) {
+	labels := make([]string, 2)
+	labels[0] = "key1=val1"
+	labels[1] = "key2=val2"
+	cfg := new(framework.ServiceConfig)
+	applyKeyValSliceFlag(labels, func(configMap map[string]string) {
+		if configMap != nil && len(configMap) != 0 {
+			cfg.Labels = configMap
+		}
+	})
+	assert.Equal(t, "val1", cfg.Labels["key1"], "Should contain key1")
+	assert.Equal(t, "val2", cfg.Labels["key2"], "Should contain key2")
 }

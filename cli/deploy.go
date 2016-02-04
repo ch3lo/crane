@@ -97,6 +97,10 @@ func deployFlags() []cli.Flag {
 			Name:  "health-check-path",
 			Usage: "path to the health check file. ex: --health-check-path=/v0/healthy",
 		},
+		cli.StringSliceFlag{
+			Name:  "label",
+			Usage: "Add the label to the deployment, ie --label=environment=beta, --label=test=beta",
+		},
 	}
 }
 
@@ -123,9 +127,9 @@ func deployBefore(c *cli.Context) error {
 		return errors.New("Cpu flag value should not be negative")
 	}
 
-	if c.String("framework") == "marathon" && c.Float64("cpu") > 1.0 {
+	if c.String("framework") == "marathon" && c.Float64("cpu") > 1.0 { // Fix this: framework flag does not exist anymore
 		return errors.New("Cpu flag value should not be > 1.0 for marathon")
-	} else if c.String("framework") == "swarm" && c.Float64("cpu") > 1024 {
+	} else if c.String("framework") == "swarm" && c.Float64("cpu") > 1024 { // Fix this: framework flag does not exist anymore
 		return errors.New("Cpu flag value should not be > 1024.0 for swarm")
 	}
 
@@ -168,7 +172,7 @@ func applyPorts(ports []string, cfg *framework.ServiceConfig) error {
 	return nil
 }
 
-func applyConstraints(contextConstraints []string, beta string, cfg *framework.ServiceConfig) error {
+func applyConstraints(contextConstraints []string, cfg *framework.ServiceConfig) error {
 	constraints := make(map[string]string)
 	for _, constraint := range contextConstraints {
 		if !strings.Contains(constraint, "=") {
@@ -177,11 +181,47 @@ func applyConstraints(contextConstraints []string, beta string, cfg *framework.S
 		splits := strings.Split(constraint, "=")
 		constraints[splits[0]] = splits[1]
 	}
-	if beta != "" {
-		constraints["slave_name"] = beta
-	}
+
 	if len(constraints) != 0 {
 		cfg.Constraints = constraints
+	}
+	return nil
+}
+
+func applyKeyValSliceFlag(sliceFlag []string, setAction func(newMap map[string]string)) error {
+	configMap := make(map[string]string)
+
+	for _, flag := range sliceFlag {
+		if !strings.Contains(flag, "=") {
+			return errors.New("The flag does not comply format key=value")
+		}
+		splits := strings.Split(flag, "=")
+		configMap[splits[0]] = splits[1]
+	}
+
+	if setAction != nil {
+		setAction(configMap)
+	}
+	return nil
+}
+
+func applyLabels(labels []string, beta string, cfg *framework.ServiceConfig) error {
+	configLabels := make(map[string]string)
+
+	for _, label := range labels {
+		if !strings.Contains(label, "=") {
+			return errors.New("Label does not comply format key=value")
+		}
+		splits := strings.Split(label, "=")
+		configLabels[splits[0]] = splits[1]
+	}
+
+	if beta != "" {
+		configLabels["slave_name"] = beta
+	}
+
+	if len(configLabels) != 0 {
+		cfg.Labels = configLabels
 	}
 	return nil
 }
@@ -213,9 +253,31 @@ func deployCmd(c *cli.Context) {
 		serviceConfig.Memory = int64(n)
 	}
 
-	err = applyConstraints(c.StringSlice("constraint"), c.String("beta"), &serviceConfig)
+	err = applyKeyValSliceFlag(c.StringSlice("constraint"), func(configMap map[string]string) {
+		if configMap != nil && len(configMap) != 0 {
+			serviceConfig.Constraints = configMap
+		}
+	})
+
 	if err != nil {
 		util.Log.Fatalln("Error reading constraints", err)
+	}
+
+	err = applyKeyValSliceFlag(c.StringSlice("label"), func(configMap map[string]string) {
+		if configMap != nil && len(configMap) != 0 {
+			serviceConfig.Labels = configMap
+		}
+	})
+
+	if err != nil {
+		util.Log.Fatalln("Error reading labels", err)
+	}
+
+	if c.String("beta") != "" {
+		if serviceConfig.Labels == nil {
+			serviceConfig.Labels = make(map[string]string)
+		}
+		serviceConfig.Labels["slave_name"] = c.String("beta")
 	}
 
 	handleDeploySigTerm(stackManager)
