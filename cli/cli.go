@@ -2,44 +2,38 @@ package cli
 
 import (
 	"errors"
+	"io/ioutil"
+	"os"
+	"path/filepath"
+
 	log "github.com/Sirupsen/logrus"
+	valid "github.com/asaskevich/govalidator"
 	"github.com/codegangsta/cli"
 	"github.com/latam-airlines/crane/cluster"
 	"github.com/latam-airlines/crane/configuration"
 	"github.com/latam-airlines/crane/util"
 	"github.com/latam-airlines/crane/version"
 	"gopkg.in/yaml.v2"
-	"io/ioutil"
-	"os"
-	"path/filepath"
 )
 
 var stackManager cluster.CraneManager
 var logFile *os.File
 
-type logConfig struct {
-	level     string
-	Formatter string
-	colored   bool
-	output    string
-	debug     bool
-}
-
-func setupLogger(config logConfig) error {
+func setupLogger(config configuration.Loggging, debug bool) error {
 	var err error
 
-	if util.Log.Level, err = log.ParseLevel(config.level); err != nil {
+	if util.Log.Level, err = log.ParseLevel(config.Level); err != nil {
 		return err
 	}
 
-	if config.debug {
+	if debug {
 		util.Log.Level = log.DebugLevel
 	}
 
 	switch config.Formatter {
 	case "text":
 		formatter := new(log.TextFormatter)
-		formatter.ForceColors = config.colored
+		formatter.ForceColors = config.Colored
 		formatter.FullTimestamp = true
 		util.Log.Formatter = formatter
 		break
@@ -51,7 +45,7 @@ func setupLogger(config logConfig) error {
 		return errors.New("Formato de lo log desconocido")
 	}
 
-	switch config.output {
+	switch config.Output {
 	case "console":
 		util.Log.Out = os.Stdout
 		break
@@ -88,6 +82,10 @@ func readConfiguration(configFile string) (*configuration.Configuration, error) 
 		return nil, err
 	}
 
+	if _, err := valid.ValidateStruct(config); err != nil {
+		return nil, err
+	}
+
 	return &config, nil
 }
 
@@ -102,49 +100,19 @@ func globalFlags() []cli.Flag {
 			Value: "crane.yml",
 			Usage: "Path to config-file",
 		},
-		cli.StringFlag{
-			Name:   "log-level",
-			Value:  "info",
-			Usage:  "Nivel de verbosidad de log",
-			EnvVar: "DEPLOYER_LOG_LEVEL",
-		},
-		cli.StringFlag{
-			Name:   "log-formatter",
-			Value:  "text",
-			Usage:  "Formato de log",
-			EnvVar: "DEPLOYER_LOG_FORMATTER",
-		},
-		cli.BoolFlag{
-			Name:   "log-colored",
-			Usage:  "Coloreo de log :D",
-			EnvVar: "DEPLOYER_LOG_COLORED",
-		},
-		cli.StringFlag{
-			Name:   "log-output",
-			Value:  "file",
-			Usage:  "Output de los logs. console | file",
-			EnvVar: "DEPLOYER_LOG_OUTPUT",
-		},
 	}
 
 	return flags
 }
 
 func setupApplication(c *cli.Context, parser parseConfig) error {
-	logConfig := logConfig{}
-	logConfig.level = c.String("log-level")
-	logConfig.Formatter = c.String("log-formatter")
-	logConfig.colored = c.Bool("log-colored")
-	logConfig.output = c.String("log-output")
-	logConfig.debug = c.Bool("debug")
-
-	err := setupLogger(logConfig)
-	if err != nil {
+	var appConfig *configuration.Configuration
+	var err error
+	if appConfig, err = parser(c.String("config")); err != nil {
 		return err
 	}
 
-	var appConfig *configuration.Configuration
-	if appConfig, err = parser(c.String("config")); err != nil {
+	if err := setupLogger(appConfig.Logging, c.Bool("debug")); err != nil {
 		return err
 	}
 
