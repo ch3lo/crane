@@ -5,19 +5,28 @@ import (
 	"strings"
 )
 
+// Parameters mapeo para manejar configuraciones de distintos tipos de datos
+type Parameters map[string]interface{}
+
 // Cluster estructura para la configuración de un cluster
 type Cluster struct {
 	Disabled  bool      `yaml:"disabled"`
 	Framework Framework `yaml:"framework"`
 }
 
+// Logging structura para la configuracion de los logs de la App
+type Loggging struct {
+	Level     string `yaml:"level" valid:"matches(panic|fatal|error|warn|info|debug),required"`
+	Formatter string `yaml:"formatter" valid:"matches(text|json),required"`
+	Colored   bool   `yaml:"colored"`
+	Output    string `yaml:"output" valid:"matches(console|file),required"`
+}
+
 // Configuration estructura para la configuracion global de Crane
 type Configuration struct {
 	Clusters map[string]Cluster `yaml:"cluster"`
+	Logging  Loggging           `yaml:"logging"`
 }
-
-// Parameters mapeo para manejar configuraciones de distintos tipos de datos
-type Parameters map[string]interface{}
 
 // Framework mapeo de un un Framework en base a su ID y sus parametros de configuración
 type Framework map[string]Parameters

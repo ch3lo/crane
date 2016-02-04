@@ -38,6 +38,7 @@ func (factory *marathonCreator) Create(params map[string]interface{}) (framework
 	if authUser != "" && authPwd == "" {
 		return nil, errors.New("Parameter basic-auth-pwd does not exist")
 	}
+
 	parameters := &Parameters{
 		EndpointUrl:           fmt.Sprint(address),
 		DeployTimeout:         deployTimeout,
@@ -46,14 +47,26 @@ func (factory *marathonCreator) Create(params map[string]interface{}) (framework
 		DockerCfg:             utils.ExtractString(params, "docker-cfg"),
 	}
 
-	return NewMarathon(parameters)
+	helper, err := NewMarathon(parameters)
+
+	if err == nil {
+		helper.healthCheckConf = &framework.HealthCheck{
+			GracePeriod:            utils.ExtractNaturalNumber(params, "health-check-grace-period"),
+			Interval:               utils.ExtractNaturalNumber(params, "health-check-interval"),
+			Timeout:                utils.ExtractNaturalNumber(params, "health-check-timeout"),
+			MaxConsecutiveFailures: utils.ExtractNaturalNumber(params, "health-check-max-consecutive-failures"),
+		}
+	}
+
+	return helper, err
 }
 
 type Marathon struct {
-	client        marathon.Marathon
-	endpointUrl   string
-	deployTimeout int
-	dockerCfg     string
+	client          marathon.Marathon
+	endpointUrl     string
+	deployTimeout   int
+	dockerCfg       string
+	healthCheckConf *framework.HealthCheck
 }
 
 type Parameters struct {
@@ -138,8 +151,19 @@ func (m *Marathon) getServiceInformationFromApp(app *marathon.Application) *fram
 	return &service
 }
 
+/* Sets global health check config to the service deploy config */
+func copyGlobalHealthCheckToServiceCfg(healthCheck *framework.HealthCheck, config *framework.ServiceConfig) {
+	if config.HealthCheckConfig != nil {
+		config.HealthCheckConfig.GracePeriod = healthCheck.GracePeriod
+		config.HealthCheckConfig.Interval = healthCheck.Interval
+		config.HealthCheckConfig.MaxConsecutiveFailures = healthCheck.MaxConsecutiveFailures
+		config.HealthCheckConfig.Timeout = healthCheck.Timeout
+	}
+}
+
 func (helper *Marathon) createService(config *framework.ServiceConfig, instances int) (*framework.ServiceInformation, error) {
 	config.DockerCfg = helper.dockerCfg
+	copyGlobalHealthCheckToServiceCfg(helper.healthCheckConf, config)
 	app := translateServiceConfig(config, instances)
 	appResult, err := helper.client.CreateApplication(app)
 	if err != nil {

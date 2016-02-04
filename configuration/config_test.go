@@ -12,6 +12,12 @@ import (
 
 // configStruct is a canonical example configuration, which should map to configYaml
 var configStruct = Configuration{
+	Logging: Loggging{
+		Level:     "info",
+		Formatter: "text",
+		Colored:   false,
+		Output:    "crane.log",
+	},
 	Clusters: map[string]Cluster{
 		"dal": {
 			Framework: Framework{
@@ -54,6 +60,11 @@ var configStruct = Configuration{
 
 // configYaml document representing configStruct
 var configYaml = `
+logging:
+  level: info
+  formatter: text
+  colored: false
+  output: crane.log
 cluster:
   dal:
     framework:

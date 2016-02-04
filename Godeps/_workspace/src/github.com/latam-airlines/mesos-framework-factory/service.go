@@ -94,6 +94,15 @@ type ServiceConfig struct {
 	MinimumHealthCapacity float64
 	MaximumOverCapacity   float64
 	DockerCfg             string
+	HealthCheckConfig     *HealthCheck
+}
+
+type HealthCheck struct {
+	Path                   string
+	GracePeriod            int
+	Interval               int
+	Timeout                int
+	MaxConsecutiveFailures int
 }
 
 // Version retorna la version de un servicio
