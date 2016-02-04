@@ -53,7 +53,36 @@ func translateServiceConfig(config *framework.ServiceConfig, instances int) *mar
 	application.Container.Docker.Container(imageWithTag)
 	application.Container.Docker.PortMappings = createPorMappings(config.Publish)
 	application.Container.Docker.Parameters = populateParameters(config)
+	// Http Health Check
+	addHealthCheck(application, config)
 	return application
+}
+
+func addHealthCheck(app *marathon.Application, cfg *framework.ServiceConfig) {
+	if cfg.HealthCheckConfig.Path != "" {
+		health := marathon.NewDefaultHealthCheck()
+		health.Protocol = "HTTP"
+		health.PortIndex = 0
+		health.Path = cfg.HealthCheckConfig.Path
+
+		if cfg.HealthCheckConfig.GracePeriod != -1 {
+			health.GracePeriodSeconds = cfg.HealthCheckConfig.GracePeriod
+		}
+		if cfg.HealthCheckConfig.Interval != -1 {
+			health.IntervalSeconds = cfg.HealthCheckConfig.Interval
+		}
+		if cfg.HealthCheckConfig.Timeout != -1 {
+			health.TimeoutSeconds = cfg.HealthCheckConfig.Timeout
+		}
+		if cfg.HealthCheckConfig.MaxConsecutiveFailures != -1 {
+			health.MaxConsecutiveFailures = cfg.HealthCheckConfig.MaxConsecutiveFailures
+		}
+
+		if app.HealthChecks == nil {
+			app.HealthChecks = make([]*marathon.HealthCheck, 0)
+		}
+		app.HealthChecks = append(app.HealthChecks, health)
+	}
 }
 
 func populateParameters(cfg *framework.ServiceConfig) []*marathon.Parameters {
