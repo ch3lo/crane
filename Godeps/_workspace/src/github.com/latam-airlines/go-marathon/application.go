@@ -482,9 +482,9 @@ func (r *marathonClient) ScaleApplicationInstances(name string, instances int, f
 
 // UpdateApplication updates an application in Marathon
 // 		application:		the structure holding the application configuration
-func (r *marathonClient) UpdateApplication(application *Application) (*DeploymentID, error) {
+func (r *marathonClient) UpdateApplication(application *Application, force bool) (*DeploymentID, error) {
 	result := new(DeploymentID)
-	uri := fmt.Sprintf("%s/%s", marathonAPIApps, trimRootPath(application.ID))
+	uri := fmt.Sprintf("%s/%s?force=%t", marathonAPIApps, trimRootPath(application.ID), force)
 	if err := r.apiPut(uri, &application, result); err != nil {
 		return nil, err
 	}
