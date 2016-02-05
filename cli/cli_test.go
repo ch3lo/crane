@@ -50,7 +50,33 @@ func (suite *CliSuite) SetupTest() {
 func (suite *CliSuite) TestSetupApp() {
 	globatCtx := cli.NewContext(nil, suite.globalSet, nil)
 	err := setupApplication(globatCtx, func(configFile string) (*configuration.Configuration, error) {
-		return suite.config, nil
+		config := &configuration.Configuration{
+			Logging: configuration.Loggging{
+				Level:     "debug",
+				Output:    "console",
+				Formatter: "text",
+			},
+			Clusters: map[string]configuration.Cluster{
+				"local": {
+					Disabled: true,
+					Framework: configuration.Framework{
+						"marathon": configuration.Parameters{
+							"address": "http://localhost:8011",
+						},
+					},
+				},
+				"remote": {
+					Framework: configuration.Framework{
+						"marathon": configuration.Parameters{
+							"address":        "http://remote:8011",
+							"deploy-timeout": 30,
+						},
+					},
+				},
+			},
+		}
+
+		return config, nil
 	})
 	assert.Nil(suite.T(), err, "Should return nil")
 }
@@ -69,6 +95,11 @@ func (suite *CliSuite) TestDisabledFramework() {
 	ctx := cli.NewContext(nil, suite.globalSet, nil)
 	err := setupApplication(ctx, func(configFile string) (*configuration.Configuration, error) {
 		config := &configuration.Configuration{
+			Logging: configuration.Loggging{
+				Level:     "debug",
+				Output:    "console",
+				Formatter: "text",
+			},
 			Clusters: map[string]configuration.Cluster{
 				"local": {
 					Disabled: true,
