@@ -29,10 +29,10 @@ func (s StackStatus) String() string {
 type StackInterface interface {
 	getServices() []*framework.ServiceInformation
 	undeployInstance(instance string)
-	DeployCheckAndNotify(serviceConfig framework.ServiceConfig, instances int, tolerance float64, ch chan StackStatus)
+	DeployCheckAndNotify(serviceConfig framework.ServiceConfig, instances int, tolerance float64, ch chan *ServiceInfoStatus)
 	FindServiceInformation(search string) ([]*framework.ServiceInformation, error)
 	DeleteService(serviceId string) chan error
-	Rollback()
+	Rollback(string, string)
 }
 
 type Stack struct {
@@ -70,17 +70,28 @@ func (s *Stack) getServices() []*framework.ServiceInformation {
 	return s.services
 }
 
-func (s *Stack) DeployCheckAndNotify(serviceConfig framework.ServiceConfig, instances int, tolerance float64, ch chan StackStatus) {
+func (s *Stack) DeployCheckAndNotify(serviceConfig framework.ServiceConfig, instances int, tolerance float64, ch chan *ServiceInfoStatus) {
 	service, err := s.frameworkApiHelper.DeployService(serviceConfig, instances)
+
+	serviceInfoStatus := new(ServiceInfoStatus)
+
 	if err != nil {
-		ch <- STACK_FAILED
+
+		if service != nil {
+			serviceInfoStatus.serviceInfo = service
+		}
+
+		serviceInfoStatus.status = STACK_FAILED
 		util.Log.Errorln(err)
 	} else {
-		ch <- STACK_READY
+		serviceInfoStatus.serviceInfo = service
+		serviceInfoStatus.status = STACK_READY
+		services := make([]*framework.ServiceInformation, 0)
+		services = append(services, service)
+		s.services = services
 	}
-	services := make([]*framework.ServiceInformation, 0)
-	services = append(services, service)
-	s.services = services
+
+	ch <- serviceInfoStatus
 }
 
 func (s *Stack) setStatus(status StackStatus) {
@@ -91,8 +102,9 @@ func (s *Stack) undeployInstance(instance string) {
 	s.frameworkApiHelper.UndeployInstance(instance)
 }
 
-func (s *Stack) Rollback() {
+func (s *Stack) Rollback(appId, previousVersion string) {
 	log.Infof("Comenzando Rollback en el Stack")
+	s.frameworkApiHelper.RollbackService(appId, previousVersion)
 }
 
 func (s *Stack) FindServiceInformation(search string) ([]*framework.ServiceInformation, error) {

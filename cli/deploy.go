@@ -23,7 +23,7 @@ func handleDeploySigTerm(sm cluster.CraneManager) {
 	signal.Notify(c, syscall.SIGTERM)
 	go func() {
 		<-c
-		sm.Rollback()
+		//sm.Rollback() XXX: To Fix This Rollback needs the current version of every Service
 		os.Exit(1)
 	}()
 }
@@ -243,7 +243,7 @@ func deployCmd(c *cli.Context) {
 		if serviceConfig.Constraints == nil {
 			serviceConfig.Constraints = make(map[string]string)
 		}
-		
+
 		serviceConfig.Labels["slave_name"] = c.String("beta")
 		serviceConfig.Constraints["slave_name"] = c.String("beta")
 	}
