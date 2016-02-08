@@ -13,6 +13,7 @@ import (
 
 	"github.com/codegangsta/cli"
 	"github.com/latam-airlines/crane/cluster"
+	"github.com/latam-airlines/crane/logger"
 	"github.com/latam-airlines/crane/util"
 	"github.com/latam-airlines/mesos-framework-factory"
 )
@@ -193,7 +194,7 @@ func deployCmd(c *cli.Context) {
 
 	envs, err := util.ParseMultiFileLinesToArray(c.StringSlice("env-file"))
 	if err != nil {
-		util.Log.Fatalln("No se pudo procesar el archivo con variables de entorno", err)
+		logger.Instance().Fatalln("No se pudo procesar el archivo con variables de entorno", err)
 	}
 
 	for _, v := range c.StringSlice("env") {
@@ -223,7 +224,7 @@ func deployCmd(c *cli.Context) {
 	})
 
 	if err != nil {
-		util.Log.Fatalln("Error reading constraints", err)
+		logger.Instance().Fatalln("Error reading constraints", err)
 	}
 
 	err = applyKeyValSliceFlag(c.StringSlice("label"), func(configMap map[string]string) {
@@ -233,7 +234,7 @@ func deployCmd(c *cli.Context) {
 	})
 
 	if err != nil {
-		util.Log.Fatalln("Error reading labels", err)
+		logger.Instance().Fatalln("Error reading labels", err)
 	}
 
 	if c.String("beta") != "" {
@@ -255,7 +256,7 @@ func deployCmd(c *cli.Context) {
 		for _, service := range services {
 			for _, instance := range service.Instances {
 				for _, val := range instance.Ports {
-					util.Log.Infof("Se desplegó %s en host %s y dirección %+v", instance.ID, instance.Host, val)
+					logger.Instance().Infof("Se desplegó %s en host %s y dirección %+v", instance.ID, instance.Host, val)
 					instanceInfo := callbackResume{
 						Id:      instance.ID,
 						Address: instance.Host + ":" + strconv.FormatInt(val.Internal, 10),
@@ -267,6 +268,6 @@ func deployCmd(c *cli.Context) {
 		jsonResume, _ := json.Marshal(resume)
 		fmt.Println(string(jsonResume))
 	} else {
-		util.Log.Fatalln("Deployment-Process terminated with errors")
+		logger.Instance().Fatalln("Deployment-Process terminated with errors")
 	}
 }

@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/gambol99/go-marathon"
+	"github.com/latam-airlines/go-marathon"
 	"github.com/latam-airlines/mesos-framework-factory"
 	"github.com/latam-airlines/mesos-framework-factory/factory"
 	"github.com/latam-airlines/mesos-framework-factory/logger"
@@ -153,7 +153,7 @@ func (m *Marathon) getServiceInformationFromApp(app *marathon.Application) *fram
 
 /* Sets global health check config to the service deploy config */
 func copyGlobalHealthCheckToServiceCfg(healthCheck *framework.HealthCheck, config *framework.ServiceConfig) {
-	if config.HealthCheckConfig != nil {
+	if config != nil && config.HealthCheckConfig != nil {
 		config.HealthCheckConfig.GracePeriod = healthCheck.GracePeriod
 		config.HealthCheckConfig.Interval = healthCheck.Interval
 		config.HealthCheckConfig.MaxConsecutiveFailures = healthCheck.MaxConsecutiveFailures
@@ -161,10 +161,7 @@ func copyGlobalHealthCheckToServiceCfg(healthCheck *framework.HealthCheck, confi
 	}
 }
 
-func (helper *Marathon) createService(config *framework.ServiceConfig, instances int) (*framework.ServiceInformation, error) {
-	config.DockerCfg = helper.dockerCfg
-	copyGlobalHealthCheckToServiceCfg(helper.healthCheckConf, config)
-	app := translateServiceConfig(config, instances)
+func (helper *Marathon) createService(app *marathon.Application) (*framework.ServiceInformation, error) {
 	appResult, err := helper.client.CreateApplication(app)
 	if err != nil {
 		return nil, err
@@ -196,28 +193,73 @@ func (helper *Marathon) DeployService(config framework.ServiceConfig, instances 
 	if err != nil {
 		return nil, err
 	}
+	config.DockerCfg = helper.dockerCfg
+	copyGlobalHealthCheckToServiceCfg(helper.healthCheckConf, &config)
+	app := translateServiceConfig(&config, instances)
 	if !helper.containsApp(apps, config.ServiceID) {
-		return helper.createService(&config, instances)
+		logger.Instance().Infoln("Creating the new service")
+		return helper.createService(app)
 	} else {
-		return helper.scaleService(config.ServiceID, instances)
+		logger.Instance().Infoln("Updating service")
+		return helper.updateService(app)
 	}
 }
 
-func (helper *Marathon) scaleService(id string, instances int) (*framework.ServiceInformation, error) {
-	deploymentId, err := helper.client.ScaleApplicationInstances(id, instances, true)
+func (helper *Marathon) updateService(app2update *marathon.Application) (*framework.ServiceInformation, error) {
+	previousApp, err := helper.client.Application(app2update.ID)
+
+	deploymentId, err := helper.client.UpdateApplication(app2update, false)
 	if err != nil {
-		logger.Instance().Errorf("Failed to Scale the application: %s, error: %s", id, err)
+		logger.Instance().Errorf("Failed to Update the application: %s, error: %s", app2update.ID, err)
 		return nil, err
 	} else {
-		app, err := helper.client.Application(id)
+		deployErr := helper.client.WaitOnDeployment(deploymentId.DeploymentID, time.Duration(helper.deployTimeout)*time.Second)
+		if deployErr != nil {
+			logger.Instance().Errorf("Failed to update the application: %s, error: %s \n", app2update.ID, deployErr)
+			rollbackErr := helper.rollback(previousApp)
+			if rollbackErr != nil {
+				return nil, rollbackErr
+			}
+			return nil, deployErr
+		}
+
+		app, err := helper.client.Application(app2update.ID)
 		if err != nil {
 			return nil, err
 		} else {
+			if !app.AllTaskRunning() {
+				logger.Instance().Errorln("Application not stable")
+				rollbackErr := helper.rollback(previousApp)
+				if rollbackErr != nil {
+					return nil, rollbackErr
+				}
+				return nil, errors.New("Deployment was not stable, rolledback to previous version")
+			}
+
 			serviceInformation := helper.getServiceInformationFromApp(app)
-			serviceInformation.Instances = helper.getInstancesByVersion(app.Tasks, app.Container.Docker.PortMappings, deploymentId.Version)
 			return serviceInformation, nil
 		}
 	}
+}
+
+func (helper *Marathon) rollback(previousApp *marathon.Application) error {
+	logger.Instance().Infof("Executing Rollback: going back to version %s", previousApp.Version)
+	rollbackApp := new(marathon.Application)
+	rollbackApp.Name(previousApp.ID)
+	rollbackApp.Version = previousApp.Version
+	rollbackDeploymentID, rollbackErr := helper.client.UpdateApplication(rollbackApp, true)
+	if rollbackErr != nil {
+		logger.Instance().Errorf("Failed to rollback the application: %s with version %s, error: %s \n", rollbackApp.ID, rollbackApp.Version, rollbackErr)
+		return rollbackErr
+	}
+	logger.Instance().Infoln("Waiting on rollback")
+	rollbackErr = helper.client.WaitOnDeployment(rollbackDeploymentID.DeploymentID, time.Duration(helper.deployTimeout)*time.Second)
+	if rollbackErr != nil {
+		logger.Instance().Errorf("Rollback of application %s took to long, manual fix is required, error: %s \n", rollbackApp.ID, rollbackErr)
+		return rollbackErr
+	}
+	logger.Instance().Infoln("Service successfully rolled back")
+	return nil
 }
 
 func (helper *Marathon) DeleteService(id string) error {
@@ -266,16 +308,10 @@ func (helper *Marathon) buildInstancePorts(dockerPortMappings []*marathon.PortMa
 	return ports
 }
 
-func (helper *Marathon) getInstancesByVersion(tasks []*marathon.Task, dockerPortMappings []*marathon.PortMapping, version string) []*framework.Instance {
-	for i, task := range tasks {
-		if task.Version != version {
-			tasks = append(tasks[:i], tasks[i+1:]...)
-		}
-	}
-	return helper.getInstancesFromTasks(tasks, dockerPortMappings)
-}
-
 func (m *Marathon) containsApp(apps []string, search string) bool {
+	if !strings.HasPrefix(search, "/") {
+		search = "/" + search
+	}
 	for _, a := range apps {
 		if a == search {
 			return true

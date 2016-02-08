@@ -3,6 +3,8 @@ package util
 import (
 	"bufio"
 	"os"
+
+	"github.com/latam-airlines/crane/logger"
 )
 
 func FileExists(path string) error {
@@ -30,7 +32,7 @@ func ParseMultiFileLinesToArray(envFiles []string) ([]string, error) {
 }
 
 func ParseSingleFileLinesToArray(path string) ([]string, error) {
-	Log.Debugf("Parseando el archivo %s", path)
+	logger.Instance().Debugf("Parseando el archivo %s", path)
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -42,6 +44,6 @@ func ParseSingleFileLinesToArray(path string) ([]string, error) {
 	for scanner.Scan() {
 		lines = append(lines, scanner.Text())
 	}
-	Log.Debugln("Parseo exitoso")
+	logger.Instance().Debugln("Parseo exitoso")
 	return lines, scanner.Err()
 }

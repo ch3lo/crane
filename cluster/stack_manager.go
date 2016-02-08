@@ -2,8 +2,9 @@ package cluster
 
 import (
 	"errors"
+
 	"github.com/latam-airlines/crane/configuration"
-	"github.com/latam-airlines/crane/util"
+	"github.com/latam-airlines/crane/logger"
 	"github.com/latam-airlines/mesos-framework-factory"
 )
 
@@ -45,7 +46,7 @@ func (sm *StackManager) setupStacks(config map[string]configuration.Cluster) err
 		if err != nil {
 			switch err.(type) {
 			case *ClusterDisabled:
-				util.Log.Warnln(err.Error())
+				logger.Instance().Warnln(err.Error())
 				continue
 			default:
 				return err
@@ -53,7 +54,7 @@ func (sm *StackManager) setupStacks(config map[string]configuration.Cluster) err
 		}
 
 		sm.stacks[key] = s
-		util.Log.Infof("Cluster %s was configured", key)
+		logger.Instance().Infof("Cluster %s was configured", key)
 	}
 
 	if len(sm.stacks) == 0 {
@@ -63,7 +64,7 @@ func (sm *StackManager) setupStacks(config map[string]configuration.Cluster) err
 }
 
 func (sm *StackManager) Deploy(serviceConfig framework.ServiceConfig, instances int, tolerance float64) bool {
-	util.Log.Infof("enter deploy stack manager - stacks: %d", len(sm.stacks))
+	logger.Instance().Infof("enter deploy stack manager - stacks: %d", len(sm.stacks))
 
 	chanMap := make(map[string]chan *ServiceInfoStatus)
 
@@ -76,14 +77,13 @@ func (sm *StackManager) Deploy(serviceConfig framework.ServiceConfig, instances 
 	//Checking for results on each go routine
 	for stackKey, ch := range chanMap {
 		if serviceInfoStatus := <-ch; serviceInfoStatus.status == STACK_READY {
-			util.Log.Infof("Deploy Process OK on stack %s, status %d", stackKey, serviceInfoStatus.status)
+			logger.Instance().Infof("Deploy Process OK on stack %s, status %d", stackKey, serviceInfoStatus.status)
 		} else {
-			util.Log.Errorf("Deploy Process Fails on stack %s", stackKey)
+			logger.Instance().Errorf("Deploy Process Fails on stack %s", stackKey)
 
 			if serviceInfoStatus.serviceInfo != nil {
 				sm.Rollback(serviceInfoStatus.serviceInfo.ID, serviceInfoStatus.serviceInfo.Version)
 			}
-
 			return false
 		}
 	}
@@ -95,7 +95,7 @@ func (sm *StackManager) FindServiceInformation(search string) []*framework.Servi
 	for stack := range sm.stacks {
 		services, err := sm.stacks[stack].FindServiceInformation(search)
 		if err != nil {
-			util.Log.Errorln(err)
+			logger.Instance().Errorln(err)
 		}
 		if services != nil || len(services) != 0 {
 			allServices = append(allServices, services...)
@@ -116,14 +116,14 @@ func (sm *StackManager) DeployedContainers() []*framework.ServiceInformation {
 }
 
 func (sm *StackManager) Rollback(appId, previousVersion string) {
-	util.Log.Infoln("Starting Rollback")
+	logger.Instance().Infoln("Starting Rollback")
 	for stack := range sm.stacks {
 		sm.stacks[stack].Rollback(appId, previousVersion)
 	}
 }
 
 func (sm *StackManager) DeleteService(serviceId string) error {
-	util.Log.Infoln("Starting DeleteService")
+	logger.Instance().Infoln("Starting DeleteService")
 
 	chanMap := make(map[string]chan error)
 
@@ -135,9 +135,9 @@ func (sm *StackManager) DeleteService(serviceId string) error {
 	//Checking for results on each go routine
 	for stackKey, ch := range chanMap {
 		if err := <-ch; err == nil {
-			util.Log.Infof("Delete Process OK on stack %s", stackKey)
+			logger.Instance().Infof("Delete Process OK on stack %s", stackKey)
 		} else {
-			util.Log.Errorf("Delete Process Fails ok stack %s", stackKey)
+			logger.Instance().Errorf("Delete Process Fails ok stack %s", stackKey)
 			// XXX: Se elimina Rollback(), se debe implementar Retry Configurable PAAS-593
 			return err
 		}

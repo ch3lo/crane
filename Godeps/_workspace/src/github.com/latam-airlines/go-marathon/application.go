@@ -122,7 +122,7 @@ func (r *Application) AllTaskRunning() bool {
 	if r.Tasks == nil {
 		return false
 	}
-	if r.TasksRunning == r.Instances {
+	if r.TasksRunning == r.Instances && r.TasksHealthy == r.Instances {
 		return true
 	}
 	return false

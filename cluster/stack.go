@@ -2,12 +2,13 @@ package cluster
 
 import (
 	"fmt"
+	"regexp"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/latam-airlines/crane/configuration"
-	"github.com/latam-airlines/crane/util"
+	"github.com/latam-airlines/crane/logger"
 	"github.com/latam-airlines/mesos-framework-factory"
 	"github.com/latam-airlines/mesos-framework-factory/factory"
-	"regexp"
 )
 
 type StackStatus int
@@ -59,7 +60,7 @@ func NewStack(stackKey string, stackNofitication chan<- StackStatus, config conf
 	s.frameworkApiHelper = clusterScheduler
 	s.serviceIdNotification = make(chan string, 1000)
 
-	util.Log.WithFields(log.Fields{
+	logger.Instance().WithFields(log.Fields{
 		"stack": stackKey,
 	}).Infof("A new framework was created: %s", config.Framework.Type())
 
@@ -76,11 +77,10 @@ func (s *Stack) DeployCheckAndNotify(serviceConfig framework.ServiceConfig, inst
 	serviceInfoStatus := new(ServiceInfoStatus)
 
 	if err != nil {
-
 		serviceInfoStatus.serviceInfo = service
 
 		serviceInfoStatus.status = STACK_FAILED
-		util.Log.Errorln(err)
+		logger.Instance().Errorln(err)
 	} else {
 		serviceInfoStatus.serviceInfo = service
 		serviceInfoStatus.status = STACK_READY

@@ -1,0 +1,70 @@
+@startuml
+actor Crane
+Crane -> MarathonFramework: deploy service
+MarathonFramework -> MarathonClient: get list of active applications in Marathon-Cluster
+MarathonClient -> MarathonFramework: return list
+activate MarathonFramework
+MarathonFramework -> MarathonTranslator: map Service-Config to Marathon-Config
+MarathonTranslator -> MarathonFramework: return new Marathon-Config
+alt application does not exist
+    MarathonFramework -> Create: create Service
+    activate MarathonFramework #LightGrey
+    Create -> MarathonClient: create application
+    activate Create
+    loop until deployTimeout
+        Create -> MarathonClient: wait on application
+    end
+    group if error on time out
+        Create -> MarathonClient: delete application
+    end
+    Create -> MarathonClient: get new application
+    MarathonClient -> Create: return new application
+    Create -> Create: map Service Information to framework
+    deactivate Create
+    Create -> MarathonFramework: return new Service or error
+    deactivate MarathonFramework
+else application already exists
+    MarathonFramework -> Update: update Service
+    activate MarathonFramework #LightGrey
+    Update -> MarathonClient: get current application
+    activate Update
+    MarathonClient -> Update: return current application
+    Update -> MarathonClient: update application
+    loop until deployTimeout
+        Update -> MarathonClient: wait on Deployment
+    end
+    group error time out
+        Update -> Rollback: rollback
+        group on rollback-error
+            Rollback -> Update: return error
+        end
+    end
+    Update -> MarathonClient: get updated application
+    MarathonClient -> Update: return updated application
+    group not all tasks running?
+        Update -> Rollback: rollback
+        group on rollback-error
+            Rollback -> Update: return error
+        end
+    end
+    Update -> Update: map Service Information to framework
+    deactivate Update
+    Update -> MarathonFramework: return updated Service or error
+    deactivate MarathonFramework
+end
+deactivate MarathonFramework
+MarathonFramework -> Rollback: execute Rollback
+activate Rollback
+Rollback -> Rollback: create rollback application with previous version
+Rollback -> MarathonClient: update to previous version
+MarathonClient -> Rollback: error
+loop until deployTimeout
+    Rollback -> MarathonClient: wait on Deployment
+end
+group error time out
+    Rollback -> Rollback: print error log "Rollback of application %s took to long, manual fix is required"
+end
+Rollback -> MarathonFramework: rollback error
+deactivate Rollback
+MarathonFramework -> Crane: return ServiceInformation
+@enduml

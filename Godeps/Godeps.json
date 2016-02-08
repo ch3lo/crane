@@ -17,8 +17,8 @@
 		},
 		{
 			"ImportPath": "github.com/codegangsta/cli",
-			"Comment": "1.2.0-197-gcf1f63a",
-			"Rev": "cf1f63a7274872768d4037305d572b70b1199397"
+			"Comment": "1.2.0-211-gd5f087d",
+			"Rev": "d5f087da9da695cf28797fba388430f5fce93139"
 		},
 		{
 			"ImportPath": "github.com/davecgh/go-spew/spew",
@@ -29,16 +29,17 @@
 			"Rev": "c3f57f280ec708df24886d9e62f2fd178d69d8e8"
 		},
 		{
-			"ImportPath": "github.com/latam-airlines/go-marathon",
-			"Rev": "4e8ade6770b9d47a04f81ba5aff536ecd269d652"
-		},
-		{
 			"ImportPath": "github.com/google/go-querystring/query",
 			"Rev": "2a60fc2ba6c19de80291203597d752e9ba58e4c0"
 		},
 		{
+			"ImportPath": "github.com/latam-airlines/go-marathon",
+			"Comment": "v0.0.1-11-gc8d54bc",
+			"Rev": "c8d54bc2c0a937ab8bf0c688540110ff2f3b348f"
+		},
+		{
 			"ImportPath": "github.com/latam-airlines/mesos-framework-factory",
-			"Rev": "8f292c3f84650690f9e59dd3f6781c0beb85cbfc"
+			"Rev": "946c0d094f2e29fba3f1a3c8df6b43f475c3318d"
 		},
 		{
 			"ImportPath": "github.com/pmezard/go-difflib/difflib",

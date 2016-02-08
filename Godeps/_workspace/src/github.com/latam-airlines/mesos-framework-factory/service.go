@@ -91,6 +91,7 @@ type ServiceConfig struct {
 	Publish               []string
 	Tag                   string
 	Constraints           map[string]string
+	Labels                map[string]string
 	MinimumHealthCapacity float64
 	MaximumOverCapacity   float64
 	DockerCfg             string

@@ -1,7 +1,7 @@
 package marathon
 
 import (
-	"github.com/gambol99/go-marathon"
+	"github.com/latam-airlines/go-marathon"
 	"github.com/latam-airlines/mesos-framework-factory"
 	"github.com/latam-airlines/mesos-framework-factory/utils"
 	"strconv"
@@ -11,16 +11,8 @@ import (
 func translateServiceConfig(config *framework.ServiceConfig, instances int) *marathon.Application {
 	application := marathon.NewDockerApplication()
 	imageWithTag := config.ImageName + ":" + config.Tag
-	labels := map[string]string{
-		"image_name": config.ImageName,
-		"image_tag":  config.Tag,
-	}
 
 	application.Name(config.ServiceID)
-
-	if config.Constraints["slave_name"] != "" {
-		labels["slave_name"] = config.Constraints["slave_name"]
-	}
 
 	// default value for CPU
 	if config.CPUShares != 0.0 {
@@ -39,13 +31,14 @@ func translateServiceConfig(config *framework.ServiceConfig, instances int) *mar
 	application.Count(instances)
 	application.Env = utils.StringSlice2Map(config.Envs)
 	application.Env["SERVICE_NAME"] = config.ServiceID
-	application.Labels = labels
 
 	//upgradeStrategy
 	application.UpgradeStrategy = &marathon.UpgradeStrategy{
 		MinimumHealthCapacity: config.MinimumHealthCapacity,
 		MaximumOverCapacity:   config.MaximumOverCapacity,
 	}
+
+	populateLabels(application, config)
 
 	//application.RequirePorts = true
 	populateConstraints(application, config)
@@ -58,8 +51,18 @@ func translateServiceConfig(config *framework.ServiceConfig, instances int) *mar
 	return application
 }
 
+func populateLabels(app *marathon.Application, config *framework.ServiceConfig) {
+	if config.Labels == nil {
+		config.Labels = make(map[string]string)
+	}
+
+	config.Labels["image_name"] = config.ImageName
+	config.Labels["image_tag"] = config.Tag
+	app.Labels = config.Labels
+}
+
 func addHealthCheck(app *marathon.Application, cfg *framework.ServiceConfig) {
-	if cfg.HealthCheckConfig.Path != "" {
+	if cfg.HealthCheckConfig != nil && cfg.HealthCheckConfig.Path != "" {
 		health := marathon.NewDefaultHealthCheck()
 		health.Protocol = "HTTP"
 		health.PortIndex = 0
