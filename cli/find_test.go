@@ -31,7 +31,7 @@ func (sm *StackManagerMock) Deploy(serviceConfig framework.ServiceConfig, instan
 func (sm *StackManagerMock) DeployedContainers() []*framework.ServiceInformation {
 	return sm.buildServiceDummyList()
 }
-func (sm *StackManagerMock) Rollback()                  {}
+func (sm *StackManagerMock) Rollback(appId, previousVersion string)                  {}
 func (sm *StackManagerMock) DeleteService(string) error { return nil }
 
 func createStackManagerMock() cluster.CraneManager {
