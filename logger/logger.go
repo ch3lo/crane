@@ -59,5 +59,8 @@ func Configure(config configuration.Loggging, debug bool) error {
 }
 
 func Instance() *log.Logger {
+	if logger == nil {
+		logger = log.New()
+	}
 	return logger
 }
