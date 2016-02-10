@@ -11,13 +11,18 @@ type CraneManager interface {
 	Deploy(serviceConfig framework.ServiceConfig, instances int, tolerance float64) bool
 	FindServiceInformation(string) []*framework.ServiceInformation
 	DeployedContainers() []*framework.ServiceInformation
-	Rollback()
+	Rollback(string, string)
 	DeleteService(string) error
 }
 
 type StackManager struct {
 	stacks            map[string]StackInterface
 	stackNotification chan StackStatus
+}
+
+type ServiceInfoStatus struct {
+	serviceInfo *framework.ServiceInformation
+	status      StackStatus
 }
 
 func NewStackManager(config *configuration.Configuration) (CraneManager, error) {
@@ -60,21 +65,25 @@ func (sm *StackManager) setupStacks(config map[string]configuration.Cluster) err
 func (sm *StackManager) Deploy(serviceConfig framework.ServiceConfig, instances int, tolerance float64) bool {
 	util.Log.Infof("enter deploy stack manager - stacks: %d", len(sm.stacks))
 
-	chanMap := make(map[string]chan StackStatus)
+	chanMap := make(map[string]chan *ServiceInfoStatus)
 
 	for stackKey := range sm.stacks {
-		ch := make(chan StackStatus)
+		ch := make(chan *ServiceInfoStatus)
 		chanMap[stackKey] = ch
 		go sm.stacks[stackKey].DeployCheckAndNotify(serviceConfig, instances, tolerance, ch)
 	}
 
 	//Checking for results on each go routine
 	for stackKey, ch := range chanMap {
-		if status := <-ch; status == STACK_READY {
-			util.Log.Infof("Deploy Process OK on stack %s, status %d", stackKey, status)
+		if serviceInfoStatus := <-ch; serviceInfoStatus.status == STACK_READY {
+			util.Log.Infof("Deploy Process OK on stack %s, status %d", stackKey, serviceInfoStatus.status)
 		} else {
 			util.Log.Errorf("Deploy Process Fails on stack %s", stackKey)
-			sm.Rollback()
+
+			if serviceInfoStatus.serviceInfo != nil {
+				sm.Rollback(serviceInfoStatus.serviceInfo.ID, serviceInfoStatus.serviceInfo.Version)
+			}
+
 			return false
 		}
 	}
@@ -106,10 +115,10 @@ func (sm *StackManager) DeployedContainers() []*framework.ServiceInformation {
 	return allServices
 }
 
-func (sm *StackManager) Rollback() {
+func (sm *StackManager) Rollback(appId, previousVersion string) {
 	util.Log.Infoln("Starting Rollback")
 	for stack := range sm.stacks {
-		sm.stacks[stack].Rollback()
+		sm.stacks[stack].Rollback(appId, previousVersion)
 	}
 }
 
@@ -129,7 +138,7 @@ func (sm *StackManager) DeleteService(serviceId string) error {
 			util.Log.Infof("Delete Process OK on stack %s", stackKey)
 		} else {
 			util.Log.Errorf("Delete Process Fails ok stack %s", stackKey)
-			sm.Rollback()
+			// XXX: Se elimina Rollback(), se debe implementar Retry Configurable PAAS-593
 			return err
 		}
 	}
