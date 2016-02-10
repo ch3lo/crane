@@ -77,9 +77,7 @@ func (s *Stack) DeployCheckAndNotify(serviceConfig framework.ServiceConfig, inst
 
 	if err != nil {
 
-		if service != nil {
-			serviceInfoStatus.serviceInfo = service
-		}
+		serviceInfoStatus.serviceInfo = service
 
 		serviceInfoStatus.status = STACK_FAILED
 		util.Log.Errorln(err)
